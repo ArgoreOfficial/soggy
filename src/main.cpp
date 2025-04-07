@@ -33,10 +33,10 @@ union SogColor
 {
     struct
     {
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
         uint8_t a;
+        uint8_t b;
+        uint8_t g;
+        uint8_t r;
     };
     uint32_t dword = 255;
 };
@@ -128,13 +128,52 @@ SogColor perPixelFunction( uint32_t _x, uint32_t _y )
 
 int main( int argc, char* argv[] )
 {
+    
+
     sogInitialize( 720, 480 );
 
     sogSwapBuffers();
     sogClear( 255, 0, 255, 255 );
     
-    sogSwapBuffers();
-    sogClear( 0, 255, 255, 255 );
+    {
+        auto src_buffer = static_cast<uint32_t*>( g_pSwapChain[ ( g_currentFrame + 1 )     % 2 ]->pixels );
+        auto dst_buffer = static_cast<uint32_t*>( g_pSwapChain[ ( g_currentFrame ) % 2 ]->pixels );
+        auto src_surface = g_pSwapChain[ ( g_currentFrame + 1 )     % 2 ];
+        auto dst_surface = g_pSwapChain[ ( g_currentFrame ) % 2 ];
+        SDL_LockSurface( src_surface );
+        SDL_LockSurface( dst_surface );
+
+        SogColor c[ 8 ] = {
+            {255,255,255,255},
+            {255,255,255,255},
+            {255,255,255,255},
+            {255,255,255,255},
+            {255,255,255,255},
+            {255,255,255,255},
+            {255,255,255,255},
+            {255,255,255,255},
+        };
+
+        __m256i a;
+        __m256i b = _mm256_load_si256( ( __m256i* )c );
+        for( uint32_t offset = 0; offset < g_width * g_height; offset += 8 )
+        {
+            __m256i* src = ( __m256i* )( &src_buffer[ offset ] );
+            __m256i* dst = ( __m256i* )( &dst_buffer[ offset ] );
+            a = _mm256_load_si256( src );
+            _mm256_store_si256( dst, _mm256_subs_epi8( b, a ) );
+        }
+
+        for( size_t i = 0; i < g_width * g_height; i++ )
+        {
+            SogColor* c = (SogColor*)( &dst_buffer[ i ] );
+            c->a = 255;
+        }
+
+        SDL_UnlockSurface( dst_surface );
+        SDL_UnlockSurface( src_surface );
+    }
+
 
     int quit = 0;
     SDL_Event event;
@@ -154,13 +193,11 @@ int main( int argc, char* argv[] )
             if( event.type == SDL_QUIT )
                 quit = 1;
         
-        sogClear( 0, 255, 255, 255 );
-
         //sogPerPixel( perPixelFunction );
 
         sogSwapBuffers();
         printf( "%f\n", deltatime );
-        //SDL_Delay( 100 );
+        SDL_Delay( 100 );
     }
 
     sogQuit();
