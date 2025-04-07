@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <chrono>
+#include <Windows.h>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -24,6 +25,8 @@ uint32_t g_currentFrame = 0;
 
 uint32_t g_width, g_height;
 uint32_t* g_pScreenBuffer;
+
+HDC g_hdcMem;
 
 float g_time = 0.0f;
 
@@ -62,6 +65,8 @@ void sogSetPixel( uint32_t _x, uint32_t _y, uint8_t _r, uint8_t _g, uint8_t _b, 
 {
     uint32_t offset = _y * g_width + _x;
     g_pScreenBuffer[ offset ] = SDL_MapRGBA( g_pCurrentSurface->format, _r, _g, _b, _a );
+
+    
 }
 
 void sogSetPixel( uint32_t _offset, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
@@ -100,6 +105,8 @@ void sogPerPixel( SogColor( *_fptr )( uint32_t, uint32_t ) )
         {
             SogColor col = _fptr( x, y );
             uint32_t offset = y * g_width + x;
+
+            SetPixel( g_hdcMem, x, y, 0x000000FF );
             g_pScreenBuffer[ offset ] = SDL_MapRGBA( g_pCurrentSurface->format, col.r, col.g, col.b, col.a );
         }
     }
@@ -132,6 +139,38 @@ int main( int argc, char* argv[] )
     
     auto start = std::chrono::system_clock::now();
 
+
+
+    // WINDOWS
+    // Define and initialize variables
+    HDC          hdc;
+    HBITMAP      hbmMem;
+    HANDLE       hOld;
+    RECT rect;
+    SIZE sz;
+    int font_size = 20;
+    int location_x = 40;
+    int location_y = 40;
+    int border = font_size / 4;
+    int duration = 10000;           // In miliseconds. The notification will always stay up more time
+    wchar_t* font_face = (wchar_t*)L"Consolas";
+    wchar_t* message = (wchar_t*)L"Bobber Kurwa";
+
+    // Acquire screen
+    hdc = ::GetDC( 0 );
+
+    // Create an off-screen DC for double-buffering
+    g_hdcMem = CreateCompatibleDC( hdc );
+    hbmMem = CreateCompatibleBitmap( hdc, g_width + 2 * border, g_height + 2 * border );
+
+    // Configure off-screen DC
+    SetBkMode( g_hdcMem, OPAQUE );
+    SetTextColor( g_hdcMem, RGB( 125, 125, 255 ) );
+    SetBkColor( g_hdcMem, RGB( 0, 0, 0 ) );
+    hOld = SelectObject( g_hdcMem, hbmMem );
+    
+
+
     while( !quit )
     {
         auto end = std::chrono::system_clock::now();
@@ -149,8 +188,30 @@ int main( int argc, char* argv[] )
 
         sogSwapBuffers();
 
-        SDL_Delay( 10 );
+        // Transfer the off-screen DC to the screen
+        BitBlt( hdc, location_x, location_y, g_width + 2 * border, g_height + 2 * border, g_hdcMem, -5, -5, SRCCOPY );
+
+        // Don't eat all the cpu!
+        //SDL_Delay( 10 );
     }
+
+
+
+
+
+
+    // Delete notification right after time expires
+    ::InvalidateRect( 0, &rect, false );
+    ::UpdateWindow( 0 );
+
+    // Free-up the off-screen DC
+    SelectObject( g_hdcMem, hOld );
+    DeleteObject( hbmMem );
+    DeleteDC( g_hdcMem );
+
+    // Release created objects
+    
+    ::ReleaseDC( 0, hdc );
 
     sogQuit();
 
