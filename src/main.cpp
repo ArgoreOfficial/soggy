@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <chrono>
 
+#include <immintrin.h>
+
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
@@ -27,12 +29,16 @@ uint32_t* g_pScreenBuffer;
 
 float g_time = 0.0f;
 
-struct SogColor
+union SogColor
 {
-    uint8_t r = 0;
-    uint8_t g = 0;
-    uint8_t b = 0;
-    uint8_t a = 255;
+    struct
+    {
+        uint8_t r;
+        uint8_t g;
+        uint8_t b;
+        uint8_t a;
+    };
+    uint32_t dword = 255;
 };
 
 void sogInitialize( uint32_t _width, uint32_t _height )
@@ -70,10 +76,13 @@ void sogSetPixel( uint32_t _offset, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t 
 }
 
 void sogClear( uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a ) 
-{
+{    
     SDL_LockSurface( g_pCurrentSurface );
+
+    uint32_t c = SDL_MapRGBA( g_pCurrentSurface->format, _r, _g, _b, _a );
     for( uint32_t offset = 0; offset < g_width * g_height; offset++ )
-        sogSetPixel( offset, _r, _g, _b, _a );
+        g_pScreenBuffer[ offset ] = c;
+
     SDL_UnlockSurface( g_pCurrentSurface );
 }
 
@@ -145,11 +154,13 @@ int main( int argc, char* argv[] )
             if( event.type == SDL_QUIT )
                 quit = 1;
         
-        sogPerPixel( perPixelFunction );
+        sogClear( 0, 255, 255, 255 );
+
+        //sogPerPixel( perPixelFunction );
 
         sogSwapBuffers();
-
-        SDL_Delay( 10 );
+        printf( "%f\n", deltatime );
+        //SDL_Delay( 100 );
     }
 
     sogQuit();
