@@ -12,16 +12,12 @@
 #include <stdio.h>
 #include <chrono>
 
-#include <immintrin.h>
+#include <context.h>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
-SDL_Window* g_pWindow = nullptr;
-SDL_Surface* g_pWindowSurface = nullptr;
-SDL_Surface* g_pBackBuffer = nullptr;
-uint32_t g_width, g_height;
-
+SogContext context;
 float g_time = 0.0f;
 
 union SogColor
@@ -36,79 +32,62 @@ union SogColor
     uint32_t dword = 255;
 };
 
-void sogInitialize( uint32_t _width, uint32_t _height )
+void sogSetPixel( uint32_t _x, uint32_t _y, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
 {
-    g_width  = _width;
-    g_height = _height;
-
-    SDL_Init( SDL_INIT_EVERYTHING );
-
-    g_pWindow = SDL_CreateWindow( "Soggy!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, _width, _height, 0 );
-    
-    g_pWindowSurface = SDL_GetWindowSurface( g_pWindow );
-	g_pBackBuffer = SDL_CreateRGBSurfaceWithFormat( 0, _width, _height, 0, g_pWindowSurface->format->format );
+    uint32_t offset = _y * context.width + _x;
+    uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
+    pixels[ offset ] = sogMapRGBA( &context, _r, _g, _b, _a );
 }
 
-void sogQuit()
+void sogSetPixel( uint32_t _offset, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
 {
-    SDL_Quit();
+    uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
+    pixels[ _offset ] = sogMapRGBA( &context, _r, _g, _b, _a );
 }
 
-void sogSetPixel( SDL_Surface* _pSurface, uint32_t _x, uint32_t _y, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
-{
-    uint32_t offset = _y * g_width + _x;
-    uint32_t* pixels = (uint32_t*)_pSurface->pixels;
-    pixels[ offset ] = SDL_MapRGBA( _pSurface->format, _r, _g, _b, _a );
-}
-
-void sogSetPixel( SDL_Surface* _pSurface, uint32_t _offset, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
-{
-    uint32_t* pixels = (uint32_t*)_pSurface->pixels;
-    pixels[ _offset ] = SDL_MapRGBA( _pSurface->format, _r, _g, _b, _a );
-}
-
-void sogClear( SDL_Surface* _pSurface, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
+void sogClear( uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
 {    
-    SDL_LockSurface( _pSurface );
+	sogBeginDraw( &context );
 
-    uint32_t c = SDL_MapRGBA( _pSurface->format, _r, _g, _b, _a );
-    uint32_t* pixels = (uint32_t*)_pSurface->pixels;
-    for( uint32_t offset = 0; offset < g_width * g_height; offset++ )
+    uint32_t c = sogMapRGBA( &context, _r, _g, _b, _a );
+    uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
+    for( uint32_t offset = 0; offset < context.width * context.height; offset++ )
         pixels[ offset ] = c;
 
-    SDL_UnlockSurface( _pSurface );
+	sogEndDraw( &context );
+  
 }
 
 void sogSwapBuffers() 
 {
-	SDL_BlitSurface( g_pBackBuffer, 0, g_pWindowSurface, 0 );
-    SDL_UpdateWindowSurface( g_pWindow );
+	SDL_BlitSurface( context.pBackBuffer, 0, context.pWindowSurface, 0 );
+    SDL_UpdateWindowSurface( context.pWindow );
 }
 
-void sogPerPixel( SDL_Surface* _pSurface, SogColor( *_fptr )( uint32_t, uint32_t ) )
+void sogPerPixel( SogColor( *_fptr )( uint32_t, uint32_t ) )
 {
     if( _fptr == nullptr )
         return;
 
-    SDL_LockSurface( _pSurface );
-    uint32_t* pixels = (uint32_t*)_pSurface->pixels;
-    for( uint32_t y = 0; y < g_height; y++ )
+	sogBeginDraw( &context );
+    uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
+    for( uint32_t y = 0; y < context.height; y++ )
     {
-        for( uint32_t x = 0; x < g_width; x++ )
+        for( uint32_t x = 0; x < context.width; x++ )
         {
             SogColor col = _fptr( x, y );
-            uint32_t offset = y * g_width + x;
-            pixels[ offset ] = SDL_MapRGBA( _pSurface->format, col.r, col.g, col.b, col.a );
+            uint32_t offset = y * context.width + x;
+            pixels[ offset ] = sogMapRGBA( &context, col.r, col.g, col.b, col.a );
         }
     }
-    SDL_UnlockSurface( _pSurface );
+	sogEndDraw( &context );
 }
 
 SogColor perPixelFunction( uint32_t _x, uint32_t _y )
 {
     SogColor fragColor{};
 
-    float d = (float)_x / (float)g_width;
+    float d = (float)_x / 720.0f;
     float r = cosf( d * 3.1415f + g_time ) * 0.5 + 0.5;
 
     fragColor.r = r * 255;
@@ -117,18 +96,13 @@ SogColor perPixelFunction( uint32_t _x, uint32_t _y )
 
 int main( int argc, char* argv[] )
 {
-    sogInitialize( 720, 480 );
+	context = sogInitializeContext( 720, 480 );
+
     sogSwapBuffers();
-    sogClear( g_pBackBuffer, 255, 0, 255, 255 );
+    sogClear( 255, 0, 255, 255 );
 
     int quit = 0;
     SDL_Event event;
-
-	SDL_Rect area;
-	area.x = 0;
-	area.y = 0;
-	area.w = g_width;
-	area.h = g_height;
 
     while( !quit )
     {
@@ -136,20 +110,19 @@ int main( int argc, char* argv[] )
         double deltatime = 1.0 / 60.0; //  static_cast<double>( elapsed.count() ) / 1000;
         g_time += deltatime;
 
-        while( SDL_PollEvent( &event ) )
-            if( event.type == SDL_QUIT )
-                quit = 1;
+		while ( SDL_PollEvent( &event ) )
+			quit |= ( event.type == SDL_QUIT );
         
-        sogPerPixel( g_pBackBuffer, perPixelFunction );
+        sogPerPixel( perPixelFunction );
 
         std::string title = "Soggy!    FPS: ";
         title += std::to_string( 1 );
-        SDL_SetWindowTitle( g_pWindow, title.c_str() );
+        SDL_SetWindowTitle( context.pWindow, title.c_str() );
 
 		sogSwapBuffers();
 	}
 
-    sogQuit();
+	sogShutdownContext( &context );
 
     return 0;
 }
