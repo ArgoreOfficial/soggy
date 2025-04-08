@@ -13,6 +13,7 @@
 #include <chrono>
 
 #include <context.h>
+#include <math.h>
 
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
@@ -94,6 +95,123 @@ SogColor perPixelFunction( uint32_t _x, uint32_t _y )
     return fragColor;
 }
 
+typedef float decimal_type_t;
+
+#define VEC2_OPERATOR(_op) \
+vec2 operator##_op##( const vec2& _lhs, const decimal_type_t& _rhs ) { \
+	return vec2{ _lhs.x _op _rhs, _lhs.y _op _rhs }; \
+} \
+vec2 operator##_op##( const decimal_type_t& _lhs, const vec2& _rhs ) { \
+	return vec2{ _lhs _op _rhs.x, _lhs _op _rhs.y }; \
+} \
+vec2 operator##_op##( const vec2& _lhs, const vec2& _rhs ) { \
+	return vec2{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y }; \
+}
+
+#define VEC3_OPERATOR(_op) \
+vec3 operator##_op##( const vec3& _lhs, const decimal_type_t& _rhs ) { \
+	return vec3{ _lhs.x _op _rhs, _lhs.y _op _rhs, _lhs.z _op _rhs }; \
+} \
+vec3 operator##_op##( const decimal_type_t& _lhs, const vec3& _rhs ) { \
+	return vec3{ _lhs _op _rhs.x, _lhs _op _rhs.y, _lhs _op _rhs.z }; \
+} \
+vec3 operator##_op##( const vec3& _lhs, const vec3& _rhs ) { \
+	return vec3{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z }; \
+}
+
+struct vec2
+{
+	decimal_type_t x, y;
+
+
+};
+
+VEC2_OPERATOR( / );
+VEC2_OPERATOR( * );
+VEC2_OPERATOR( + );
+VEC2_OPERATOR( - );
+
+struct vec3
+{
+	decimal_type_t x, y, z;
+
+	vec2 xy() {
+		return { x, y };
+	}
+
+	decimal_type_t& operator []( size_t _index ) {
+		return ( &x )[ _index ];
+	}
+};
+
+VEC3_OPERATOR( / );
+VEC3_OPERATOR( * );
+VEC3_OPERATOR( +);
+VEC3_OPERATOR( -);
+
+template<typename Ty>
+Ty clamp( const Ty& _v, const Ty& _min, const Ty& _max )
+{
+	return std::max( std::min<Ty>( _v, _max ), _min );
+}
+
+struct vec4
+{
+	decimal_type_t x, y, z, w;
+	vec4() = default;
+	vec4( const vec3& _vec, decimal_type_t _w ) : 
+		x{ _vec.x }, y{ _vec.y }, z{ _vec.z }, w{ _w } 
+	{ }
+
+	operator SogColor() {
+		SogColor c;
+		c.r = clamp<float>( x, 0.0f, 1.0f ) * 255;
+		c.g = clamp<float>( y, 0.0f, 1.0f ) * 255;
+		c.b = clamp<float>( z, 0.0f, 1.0f ) * 255;
+		c.a = clamp<float>( w, 0.0f, 1.0f ) * 255;
+		return c;
+	}
+};
+
+decimal_type_t length( const vec2& _vec2 ) {
+	return std::sqrt( _vec2.x * _vec2.x + _vec2.y * _vec2.y );
+}
+
+vec2 floor( const vec2& _t ) {
+	return vec2{
+		floor( _t.x ),
+		floor( _t.y )
+	};
+}
+
+vec2 mod( const vec2& _x, decimal_type_t _y ) {
+	return _x - _y * floor( _x / _y );
+}
+
+// https://www.shadertoy.com/view/XsXXDn
+SogColor shaderCreation( uint32_t _x, uint32_t _y )
+{
+	vec3 fragCoord{ (float)_x, (float)_y, 1.0f };
+	vec2 r = vec2{ (float)context.width, (float)context.height };
+
+	vec3 c{};
+	float l, z = g_time;
+	for ( int i = 0; i < 3; i++ )
+	{
+		vec2 uv, p = fragCoord.xy() / r;
+		uv = p;
+		p = p - 0.5f;
+		p.x *= r.x / r.y;
+		z += 0.07f;
+		l = length( p );
+		uv = uv + ( p / l * ( sin( z ) + 1.0f ) * abs( sin( l * 9.0f - z - z ) ) );
+		c[ i ] = 0.01f / length( mod( uv, 1.0f ) - 0.5f );
+	}
+	
+	SogColor fragColor = vec4( c / l, g_time );
+	return fragColor;
+}
+
 int main( int argc, char* argv[] )
 {
 	context = sogInitializeContext( 720, 480 );
@@ -113,7 +231,7 @@ int main( int argc, char* argv[] )
 		while ( SDL_PollEvent( &event ) )
 			quit |= ( event.type == SDL_QUIT );
         
-        sogPerPixel( perPixelFunction );
+        sogPerPixel( shaderCreation );
 
         std::string title = "Soggy!    FPS: ";
         title += std::to_string( 1 );
