@@ -97,6 +97,11 @@ SogColor perPixelFunction( uint32_t _x, uint32_t _y )
 
 typedef float decimal_type_t;
 
+#define VEC_SWIZZLE2( _a, _b, ... ) struct { float __VA_ARGS__; inline operator vec2() const { return { _a, _b }; } } _a##_b
+#define VEC2_SWIZZLE2( _a, _b ) VEC_SWIZZLE2( _a, _b, x, y )
+#define VEC3_SWIZZLE2( _a, _b ) VEC_SWIZZLE2( _a, _b, x, y, z )
+#define VEC4_SWIZZLE2( _a, _b ) VEC_SWIZZLE2( _a, _b, x, y, z, w )
+
 #define VEC2_OPERATOR(_op) \
 vec2 operator##_op##( const vec2& _lhs, const decimal_type_t& _rhs ) { \
 	return vec2{ _lhs.x _op _rhs, _lhs.y _op _rhs }; \
@@ -122,8 +127,6 @@ vec3 operator##_op##( const vec3& _lhs, const vec3& _rhs ) { \
 struct vec2
 {
 	decimal_type_t x, y;
-
-
 };
 
 VEC2_OPERATOR( / );
@@ -131,14 +134,20 @@ VEC2_OPERATOR( * );
 VEC2_OPERATOR( + );
 VEC2_OPERATOR( - );
 
-struct vec3
+union vec3
 {
-	decimal_type_t x, y, z;
+	struct { float x, y, z; };
 
-	vec2 xy() {
-		return { x, y };
-	}
+	VEC3_SWIZZLE2( x, x );
+	VEC3_SWIZZLE2( y, y );
+	VEC3_SWIZZLE2( z, z );
 
+	VEC3_SWIZZLE2( x, y );
+
+	vec3( void )                         : x{  0 }, y{  0 }, z{  0 } {};
+	vec3( float _v )                     : x{ _v }, y{ _v }, z{ _v } {};
+	vec3( float _x, float _y, float _z ) : x{ _x }, y{ _y }, z{ _z } {};
+	
 	decimal_type_t& operator []( size_t _index ) {
 		return ( &x )[ _index ];
 	}
@@ -194,16 +203,16 @@ SogColor shaderCreation( uint32_t _x, uint32_t _y )
 	vec3 fragCoord{ (float)_x, (float)_y, 1.0f };
 	vec2 r = vec2{ (float)context.width, (float)context.height };
 
-	vec3 c{};
+	vec3 c;
 	float l, z = g_time;
 	for ( int i = 0; i < 3; i++ )
 	{
-		vec2 uv, p = fragCoord.xy() / r;
+		vec2 uv, p = fragCoord.xy / r;
 		uv = p;
 		p = p - 0.5f;
 		p.x *= r.x / r.y;
 		z += 0.07f;
-		l = length( p );
+		l = std::max( length( p ), 0.0000001f );
 		uv = uv + ( p / l * ( sin( z ) + 1.0f ) * abs( sin( l * 9.0f - z - z ) ) );
 		c[ i ] = 0.01f / length( mod( uv, 1.0f ) - 0.5f );
 	}
