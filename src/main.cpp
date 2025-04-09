@@ -26,18 +26,18 @@
 
 sog::Context context;
 float g_time = 0.0f;
+sog::vec2 iResolution{};
 
 // https://www.shadertoy.com/view/XsXXDn
-sog::color shaderCreation( uint32_t _x, uint32_t _y )
+void shaderCreation( sog::vec4& _outFragColor, sog::vec2 _fragCoord )
 {
-	sog::vec3 fragCoord{ (float)_x, (float)_y, 1.0f };
 	sog::vec2 r = sog::vec2{ (float)context.width, (float)context.height };
 
 	sog::vec3 c;
 	float l, z = g_time;
 	for ( int i = 0; i < 3; i++ )
 	{
-		sog::vec2 uv, p = fragCoord.xy / r;
+		sog::vec2 uv, p = _fragCoord / r;
 		uv = p;
 		p = p - 0.5f;
 		p.x *= r.x / r.y;
@@ -47,7 +47,56 @@ sog::color shaderCreation( uint32_t _x, uint32_t _y )
 		c[ i ] = 0.01f / sog::length( sog::mod( uv, 1.0f ) - 0.5f );
 	}
 	
-	return sog::vec4( c / l, g_time );
+	_outFragColor = sog::vec4( c / l, g_time );
+}
+
+#define iterations 7
+#define volsteps 7
+#define pi 3.141592653589793
+
+// https://www.shadertoy.com/view/WcfXRs
+void shaderMilky( sog::vec4& fragColor, sog::vec2 fragCoord )
+{
+	//Initialize animate time (10x speed)
+	float t = g_time / 0.1,
+	//Fractional starting index
+	f = sog::fract( -t ),
+	//Whole-index for star
+	w = 0.0;
+
+		//Screen uvs, centered and aspect correct (-0.5 to +0.5)
+	sog::vec2 suv = ( fragCoord - iResolution * 0.5 ) / iResolution.y;
+
+	//Prepare the sum of the star colors
+	sog::vec3 rgb{ 0.0f };
+
+	//Loop through 100 stars
+	for( float i = f; i < 1e2; i++ )
+	{
+		//Find the whole-number star index
+		w = std::round( i + t );
+		//Square to prevent linear patterns. sin is a better alternative
+		w *= w; //sin(w)
+		//Pick a color using the index
+		rgb += ( sog::cos( w + sog::vec3( 0, 1, 2 ) ) + 1. )
+		//Vary the brightness with the index
+		* std::exp( sog::cos( w / .1 ) / .6 )
+		//Fade in and out
+		* std::min( 1e3f - i / .1f + 9.f, i ) / 5e4
+		//Attentuate outward
+		/ sog::length( suv
+		//Set the star position
+		+ .05f * sog::cos( w / .31f + sog::vec2( 0.f, 5.f ) ) * sqrt( i ) );
+	}
+
+	//Increase contrast
+	rgb *= rgb;
+
+	//Tanh tonemap:
+	//https://www.shadertoy.com/view/ms3BD7
+	rgb = tanh( rgb );
+
+	fragColor = sog::vec4( rgb, 1.0 );
 }
 
 struct FramerateCounter
@@ -112,6 +161,7 @@ struct FramerateCounter
 int main( int argc, char* argv[] )
 {
 	context = sog::initializeContext( 720, 480 );
+	iResolution = { (float)context.width, (float)context.height };
 
     sog::swapBuffers( &context );
     sog::gfx::clear( &context, 255, 0, 255, 255 );
@@ -132,7 +182,7 @@ int main( int argc, char* argv[] )
 		while ( SDL_PollEvent( &event ) )
 			quit |= ( event.type == SDL_QUIT );
         
-        sog::gfx::runShader( &kernels, shaderCreation );
+        sog::gfx::runShader( &kernels, shaderMilky );
 
         std::string title = "Soggy!";
         title += "  FPS:" + std::to_string( 1.0 / ftcounter.getAverageDeltaTime() );
