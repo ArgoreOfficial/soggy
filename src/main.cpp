@@ -48,83 +48,25 @@ union SogColor
 
 struct SogKernel
 {
-	SDL_Surface* pSurface;
 	uint32_t* pBase;
 	uint32_t baseWidth;
-	uint32_t baseX, baseY;
-	uint32_t width, height;
-	uint32_t endX, endY;
-};
-
-struct SogKernelSpan
-{
-	SDL_Surface* pSurface;
-	uint32_t* pBase;
 	uint32_t offset;
 	uint32_t size;
 };
 
-std::vector<SogKernel> sogBuildKernelList( SogContext* _pContext, uint32_t _kernelWidth, uint32_t _kernelHeight ) 
+std::vector<SogKernel> sogBuildKernelList( SogContext* _pContext, uint32_t _kernelSize )
 {
-	uint32_t texWidth  = _pContext->width;
-	uint32_t texHeight = _pContext->height;
-
-	std::vector<SogKernel> vec{};
-		
-	for( uint32_t y = 0; y < texHeight; y += _kernelHeight )
-	{
-		for( uint32_t x = 0; x < texWidth; x += _kernelWidth )
-		{
-			uint32_t kw = std::min( _kernelWidth, ( texWidth - x ) );
-			uint32_t kh = std::min( _kernelWidth, ( texHeight - y ) );
-
-			SogKernel kern{};
-			kern.width = kw; 
-			kern.height = kh;
-
-			// kernel surface base
-			kern.pSurface = SDL_CreateRGBSurfaceWithFormat( 0, kw, kh, 0, _pContext->pWindowSurface->format->format );
-			kern.pBase = (uint32_t*)kern.pSurface->pixels;
-			kern.baseX = 0; 
-			kern.baseY = 0;
-			kern.baseWidth = kw;
-			kern.endX = kw; 
-			kern.endY = kh;
-
-			// backbuffer pBase 
-			/*
-			kern.pSurface = nullptr;
-			kern.pBase = (uint32_t*)_pContext->pBackBuffer->pixels;
-			kern.baseX = x;
-			kern.baseY = y;
-			kern.baseWidth = _pContext->width;
-			kern.endX = x + kw;
-			kern.endY = y + kh;
-			*/
-
-			vec.push_back( kern );
-		}
-	}
-
-	return vec;
-}
-
-std::vector<SogKernelSpan> sogBuildKernelSpanList( SogContext* _pContext, uint32_t _kernelSize )
-{
-	uint32_t texWidth  = _pContext->width;
-	uint32_t texHeight = _pContext->height;
-	uint32_t bufferSize = texHeight * texWidth;
-
-	std::vector<SogKernelSpan> vec{};
-		
+	uint32_t bufferSize = _pContext->width * _pContext->height;
+	std::vector<SogKernel> vec{ (size_t)std::ceil( (float)bufferSize / (float)_kernelSize ) };
+	
+	uint32_t i = 0;
 	for( uint32_t offset = 0; offset < bufferSize; offset += _kernelSize )
 	{
-		SogKernelSpan kern{};
-		kern.pSurface = nullptr;
-		kern.pBase = (uint32_t*)_pContext->pBackBuffer->pixels;
-		kern.offset = offset;
-		kern.size = std::min( _kernelSize, bufferSize - offset );
-		vec.push_back( kern );	
+		SogKernel& kern = vec[ i++ ];
+		kern.pBase     = (uint32_t*)_pContext->pBackBuffer->pixels;
+		kern.baseWidth = _pContext->width;
+		kern.offset    = offset;
+		kern.size      = std::min( _kernelSize, bufferSize - offset );
 	}
 
 	return vec;
@@ -163,19 +105,6 @@ void sogSwapBuffers()
 
 void sogKernelFunc( SogKernel _kernel, SogColor( *_fptr )( uint32_t, uint32_t ) )
 {
-	for( uint32_t y = _kernel.baseY; y < _kernel.endY; y++ )
-	{
-		for( uint32_t x = _kernel.baseX; x < _kernel.endX; x++ )
-		{
-			SogColor col = _fptr( x, y );
-			uint32_t offset = y * _kernel.baseWidth + x;
-			_kernel.pBase[ offset ] = sogMapRGBA( &context, col.r, col.g, col.b, col.a );
-		}
-	}
-}
-
-void sogKernelSpanFunc( SogKernelSpan _kernel, SogColor( *_fptr )( uint32_t, uint32_t ) )
-{
 	for( size_t offset = _kernel.offset; offset < _kernel.offset + _kernel.size; offset++ )
 	{
 		uint32_t x = offset % context.width;
@@ -185,7 +114,7 @@ void sogKernelSpanFunc( SogKernelSpan _kernel, SogColor( *_fptr )( uint32_t, uin
 	}
 }
 
-void sogPerPixel( std::vector<SogKernelSpan>& _kernels, SogColor( *_fptr )( uint32_t, uint32_t ) )
+void sogPerPixel( std::vector<SogKernel>& _kernels, SogColor( *_fptr )( uint32_t, uint32_t ) )
 {
     if( _fptr == nullptr )
         return;
@@ -195,7 +124,7 @@ void sogPerPixel( std::vector<SogKernelSpan>& _kernels, SogColor( *_fptr )( uint
 
 	std::vector<std::thread> threads{ _kernels.size() };
 	for( size_t i = 0; i < _kernels.size(); i++ )
-		threads[ i ] = std::thread( sogKernelSpanFunc, _kernels[ i ], _fptr );
+		threads[ i ] = std::thread( sogKernelFunc, _kernels[ i ], _fptr );
 	
 	for( size_t i = 0; i < _kernels.size(); i++ )
 		threads[ i ].join();
@@ -305,7 +234,7 @@ int main( int argc, char* argv[] )
     sogClear( 255, 0, 255, 255 );
 
 	//auto kernels = sogBuildKernelList( &context, 720, 480 / 8 );
-	auto kernels = sogBuildKernelSpanList( &context, 150 * 150 );
+	auto kernels = sogBuildKernelList( &context, 150 * 150 );
 
     int quit = 0;
     SDL_Event event;
