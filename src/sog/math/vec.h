@@ -14,35 +14,6 @@ _a##_b
 #define VEC3_SWIZZLE2( _a, _b ) VEC_SWIZZLE2( _a, _b, x, y, z )
 #define VEC4_SWIZZLE2( _a, _b ) VEC_SWIZZLE2( _a, _b, x, y, z, w )
 
-#define VEC_OPERATOR(_lhsTy,_rhsTy,_op,...) \
-inline auto operator##_op##( const _lhsTy& _lhs, const _rhsTy& _rhs ) { \
-	return __VA_ARGS__; \
-}
-
-#define VEC2_OPERATOR(_op) \
-VEC_OPERATOR(vec2, decimal_type_t, _op, vec2{ _lhs.x _op _rhs,   _lhs.y _op _rhs   } ) \
-VEC_OPERATOR(decimal_type_t, vec2, _op, vec2{ _lhs   _op _rhs.x, _lhs   _op _rhs.y } ) \
-VEC_OPERATOR(vec2,           vec2, _op, vec2{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y } ) 
-
-template<typename Ty>
-union vec2_t
-{
-	struct { Ty x, y; };
-};
-
-typedef vec2_t<float> vec2;
-typedef vec2_t<double> vec2d;
-
-VEC2_OPERATOR( / );
-VEC2_OPERATOR( * );
-VEC2_OPERATOR( + );
-VEC2_OPERATOR( - );
-
-#define VEC3_OPERATOR(_op) \
-VEC_OPERATOR(vec3, decimal_type_t, _op, vec3{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs   } ) \
-VEC_OPERATOR(decimal_type_t, vec3, _op, vec3{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z } ) \
-VEC_OPERATOR(vec3,           vec3, _op, vec3{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z } ) 
-
 #define VEC3_SWIZZLE2_MEMBERS \
 VEC3_SWIZZLE2( x, x ); \
 VEC3_SWIZZLE2( x, y ); \
@@ -53,6 +24,43 @@ VEC3_SWIZZLE2( y, z ); \
 VEC3_SWIZZLE2( z, x ); \
 VEC3_SWIZZLE2( z, y ); \
 VEC3_SWIZZLE2( z, z );
+
+#define VEC_OPERATOR(_lhsTy,_rhsTy,_op,...) \
+inline auto operator##_op##( const _lhsTy& _lhs, const _rhsTy& _rhs ) { \
+	return __VA_ARGS__; \
+}
+
+#define VEC2_OPERATOR(_op) \
+VEC_OPERATOR(vec2, decimal_type_t, _op, vec2{ _lhs.x _op _rhs,   _lhs.y _op _rhs   } ) \
+VEC_OPERATOR(decimal_type_t, vec2, _op, vec2{ _lhs   _op _rhs.x, _lhs   _op _rhs.y } ) \
+VEC_OPERATOR(vec2,           vec2, _op, vec2{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y } ) 
+
+#define VEC3_OPERATOR(_op) \
+VEC_OPERATOR(vec3, decimal_type_t, _op, vec3{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs   } ) \
+VEC_OPERATOR(decimal_type_t, vec3, _op, vec3{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z } ) \
+VEC_OPERATOR(vec3,           vec3, _op, vec3{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z } ) 
+
+#define VEC4_OPERATOR(_op) \
+VEC_OPERATOR(vec4, decimal_type_t, _op, vec4{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs,   _lhs.w _op _rhs   } ) \
+VEC_OPERATOR(decimal_type_t, vec4, _op, vec4{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z, _lhs   _op _rhs.w } ) \
+VEC_OPERATOR(vec4,           vec4, _op, vec4{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z, _lhs.w _op _rhs.w } ) 
+
+#define VEC_OPERATOR_ALL(_op) \
+VEC2_OPERATOR(_op); \
+VEC3_OPERATOR(_op); \
+VEC4_OPERATOR(_op);
+
+template<typename Ty>
+union vec2_t
+{
+	struct { Ty x, y; };
+
+	vec2_t() : x{ 0 }, y{ 0 } {}
+	vec2_t( Ty _x, Ty _y ) : x{ _x }, y{ _y } {}
+};
+
+typedef vec2_t<float> vec2;
+typedef vec2_t<double> vec2d;
 
 union vec3
 {
@@ -69,20 +77,23 @@ union vec3
 	}
 };
 
-VEC3_OPERATOR( / );
-VEC3_OPERATOR( * );
-VEC3_OPERATOR( + );
-VEC3_OPERATOR( - );
-
 struct vec4
 {
 	decimal_type_t x, y, z, w;
 	vec4() = default;
-	vec4( const vec3& _vec, decimal_type_t _w ) :
-		x{ _vec.x }, y{ _vec.y }, z{ _vec.z }, w{ _w }
-	{}
+	vec4( const vec3& _vec, decimal_type_t _w )    : x{ _vec.x }, y{ _vec.y }, z{ _vec.z }, w{ _w } { }
+	vec4( float _x, float _y, float _z, float _w ) : x{     _x }, y{     _y }, z{     _z }, w{ _w } { }
 };
 
+VEC_OPERATOR_ALL(/);
+VEC_OPERATOR_ALL(*);
+VEC_OPERATOR_ALL(+);
+VEC_OPERATOR_ALL(-);
+
+inline vec3& operator +=( vec3& _a, const vec3& _b ) { _a = _a + _b; return _a; }
+inline vec3& operator -=( vec3& _a, const vec3& _b ) { _a = _a - _b; return _a; }
+inline vec3& operator *=( vec3& _a, const vec3& _b ) { _a = _a * _b; return _a; }
+inline vec3& operator /=( vec3& _a, const vec3& _b ) { _a = _a / _b; return _a; }
 
 }
 

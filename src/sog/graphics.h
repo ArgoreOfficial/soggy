@@ -34,9 +34,11 @@ struct KernelList;
 
 namespace gfx {
 
+typedef void( *shader_main_t )( sog::vec4& _out, sog::vec2 _in );
+
 void clear( Context* _pContext, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a );
 
-void runShader( KernelList* _kernels, sog::color( *_fptr )( uint32_t, uint32_t ) );
+void runShader( KernelList* _kernels, shader_main_t _shader );
 
 }
 
