@@ -26,18 +26,18 @@
 
 sog::Context context;
 float g_time = 0.0f;
-sog::vec2 iResolution{};
+sog::vec2f iResolution{};
 
 // https://www.shadertoy.com/view/XsXXDn
-void shaderCreation( sog::vec4& _outFragColor, sog::vec2 _fragCoord )
+void shaderCreation( sog::vec4f& _outFragColor, sog::vec2f _fragCoord )
 {
-	sog::vec2 r = sog::vec2{ (float)context.width, (float)context.height };
+	sog::vec2f r = sog::vec2f{ (float)context.width, (float)context.height };
 
-	sog::vec3 c;
+	sog::vec3f c;
 	float l, z = g_time;
 	for ( int i = 0; i < 3; i++ )
 	{
-		sog::vec2 uv, p = _fragCoord / r;
+		sog::vec2f uv, p = _fragCoord / r;
 		uv = p;
 		p = p - 0.5f;
 		p.x *= r.x / r.y;
@@ -47,7 +47,7 @@ void shaderCreation( sog::vec4& _outFragColor, sog::vec2 _fragCoord )
 		c[ i ] = 0.01f / sog::length( sog::mod( uv, 1.0f ) - 0.5f );
 	}
 	
-	_outFragColor = sog::vec4( c / l, g_time );
+	_outFragColor = sog::vec4f( c / l, g_time );
 }
 
 #define iterations 7
@@ -55,7 +55,7 @@ void shaderCreation( sog::vec4& _outFragColor, sog::vec2 _fragCoord )
 #define pi 3.141592653589793
 
 // https://www.shadertoy.com/view/WcfXRs
-void shaderMilky( sog::vec4& fragColor, sog::vec2 fragCoord )
+void shaderMilky( sog::vec4f& fragColor, sog::vec2f fragCoord )
 {
 	//Initialize animate time (10x speed)
 	float t = g_time / 0.1,
@@ -65,10 +65,10 @@ void shaderMilky( sog::vec4& fragColor, sog::vec2 fragCoord )
 	w = 0.0;
 
 		//Screen uvs, centered and aspect correct (-0.5 to +0.5)
-	sog::vec2 suv = ( fragCoord - iResolution * 0.5 ) / iResolution.y;
+	sog::vec2f suv = ( fragCoord - iResolution * 0.5 ) / iResolution.y;
 
 	//Prepare the sum of the star colors
-	sog::vec3 rgb{ 0.0f };
+	sog::vec3f rgb{ 0.0f };
 
 	//Loop through 100 stars
 	for( float i = f; i < 1e2; i++ )
@@ -78,7 +78,7 @@ void shaderMilky( sog::vec4& fragColor, sog::vec2 fragCoord )
 		//Square to prevent linear patterns. sin is a better alternative
 		w *= w; //sin(w)
 		//Pick a color using the index
-		rgb += ( sog::cos( w + sog::vec3( 0, 1, 2 ) ) + 1. )
+		rgb += ( sog::cos( w + sog::vec3f( 0, 1, 2 ) ) + 1. )
 		//Vary the brightness with the index
 		* std::exp( sog::cos( w / .1 ) / .6 )
 		//Fade in and out
@@ -86,7 +86,7 @@ void shaderMilky( sog::vec4& fragColor, sog::vec2 fragCoord )
 		//Attentuate outward
 		/ sog::length( suv
 		//Set the star position
-		+ .05f * sog::cos( w / .31f + sog::vec2( 0.f, 5.f ) ) * sqrt( i ) );
+		+ .05f * sog::cos( w / .31f + sog::vec2f( 0.f, 5.f ) ) * sqrt( i ) );
 	}
 
 	//Increase contrast
@@ -96,7 +96,7 @@ void shaderMilky( sog::vec4& fragColor, sog::vec2 fragCoord )
 	//https://www.shadertoy.com/view/ms3BD7
 	rgb = tanh( rgb );
 
-	fragColor = sog::vec4( rgb, 1.0 );
+	fragColor = sog::vec4f( rgb, 1.0 );
 }
 
 struct FramerateCounter
@@ -182,7 +182,7 @@ int main( int argc, char* argv[] )
 		while ( SDL_PollEvent( &event ) )
 			quit |= ( event.type == SDL_QUIT );
         
-        sog::gfx::runShader( &kernels, shaderMilky );
+        sog::gfx::runShader( &kernels, shaderCreation );
 
         std::string title = "Soggy!";
         title += "  FPS:" + std::to_string( 1.0 / ftcounter.getAverageDeltaTime() );
