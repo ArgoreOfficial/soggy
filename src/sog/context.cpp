@@ -2,11 +2,11 @@
 
 #include <SDL.h>
 
-SogContext sogInitializeContext( uint32_t _width, uint32_t _height )
+sog::Context sog::initializeContext( uint32_t _width, uint32_t _height )
 {
 	SDL_Init( SDL_INIT_EVERYTHING );
 
-	SogContext context{};
+	sog::Context context{};
 
 	context.width  = _width;
 	context.height = _height;
@@ -18,7 +18,7 @@ SogContext sogInitializeContext( uint32_t _width, uint32_t _height )
 	return context;
 }
 
-void sogShutdownContext( SogContext* _pContext )
+void sog::shutdownContext( sog::Context* _pContext )
 {
 	SDL_FreeSurface( _pContext->pBackBuffer );
 	SDL_DestroyWindow( _pContext->pWindow );
@@ -26,17 +26,24 @@ void sogShutdownContext( SogContext* _pContext )
 	SDL_Quit();
 }
 
-uint32_t sogMapRGBA( SogContext* _pContext, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
+uint32_t sog::mapRGBA( sog::Context* _pContext, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
 {
 	return SDL_MapRGBA( _pContext->pWindowSurface->format, _r, _g, _b, _a );
 }
 
-void sogBeginDraw( SogContext* _pContext )
+void sog::beginDraw( sog::Context* _pContext )
 {
 	SDL_LockSurface( _pContext->pBackBuffer );
 }
 
-void sogEndDraw( SogContext* _pContext )
+void sog::endDraw( sog::Context* _pContext )
 {
 	SDL_UnlockSurface( _pContext->pBackBuffer );
 }
+
+void sog::swapBuffers( sog::Context* _pContext )
+{
+	SDL_BlitSurface( _pContext->pBackBuffer, 0, _pContext->pWindowSurface, 0 );
+	SDL_UpdateWindowSurface( _pContext->pWindow );
+}
+

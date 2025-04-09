@@ -15,7 +15,7 @@ _a##_b
 #define VEC4_SWIZZLE2( _a, _b ) VEC_SWIZZLE2( _a, _b, x, y, z, w )
 
 #define VEC_OPERATOR(_lhsTy,_rhsTy,_op,...) \
-auto operator##_op##( const _lhsTy& _lhs, const _rhsTy& _rhs ) { \
+inline auto operator##_op##( const _lhsTy& _lhs, const _rhsTy& _rhs ) { \
 	return __VA_ARGS__; \
 }
 
