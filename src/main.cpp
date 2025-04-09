@@ -15,6 +15,8 @@
 #include <context.h>
 #include <math.h>
 
+#include <thread>
+
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 
@@ -56,7 +58,7 @@ std::vector<SogKernel> sogBuildKernelList( SogContext* _pContext, uint32_t _kern
 			uint32_t kw = std::min( _kernelWidth, ( texWidth - x ) );
 			uint32_t kh = std::min( _kernelWidth, ( texHeight - y ) );
 
-			vec.push_back( { nullptr,0, x, y, kw, kh, x + kw, y + kh } );
+			vec.push_back( { (uint32_t*)_pContext->pBackBuffer->pixels, 0, x, y, kw, kh, x + kw, y + kh } );
 		}
 	}
 	
@@ -95,6 +97,20 @@ void sogSwapBuffers()
     SDL_UpdateWindowSurface( context.pWindow );
 }
 
+void sogKernelFunc( SogKernel _kernel, SogColor( *_fptr )( uint32_t, uint32_t ) )
+{
+	for( uint32_t y = _kernel.baseY; y < _kernel.endY; y++ )
+	{
+		for( uint32_t x = _kernel.baseX; x < _kernel.endX; x++ )
+		{
+			SogColor col = _fptr( x, y );
+			uint32_t offset = y * context.width + x;
+			_kernel.pBase[ offset ] = sogMapRGBA( &context, col.r, col.g, col.b, col.a );
+		}
+	}
+}
+
+
 void sogPerPixel( std::vector<SogKernel>& _kernels, SogColor( *_fptr )( uint32_t, uint32_t ) )
 {
     if( _fptr == nullptr )
@@ -103,19 +119,13 @@ void sogPerPixel( std::vector<SogKernel>& _kernels, SogColor( *_fptr )( uint32_t
 	sogBeginDraw( &context );
     uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
 
-	for( auto& k : _kernels )
-	{
-		for( uint32_t y = k.baseY; y < k.endY; y++ )
-		{
-			for( uint32_t x = k.baseX; x < k.endX; x++ )
-			{
-				SogColor col = _fptr( x, y );
-				uint32_t offset = y * context.width + x;
-				pixels[ offset ] = sogMapRGBA( &context, col.r, col.g, col.b, col.a );
-			}
-		}
-	}
-
+	std::vector<std::thread> threads{ _kernels.size() };
+	for( size_t i = 0; i < _kernels.size(); i++ )
+		threads[ i ] = std::thread( sogKernelFunc, _kernels[ i ], _fptr );
+	
+	for( size_t i = 0; i < _kernels.size(); i++ )
+		threads[ i ].join();
+	
 	sogEndDraw( &context );
 }
 
@@ -169,20 +179,27 @@ VEC2_OPERATOR( * );
 VEC2_OPERATOR( + );
 VEC2_OPERATOR( - );
 
+#define VEC3_SWIZZLE2_MEMBERS \
+VEC3_SWIZZLE2( x, x ); \
+VEC3_SWIZZLE2( x, y ); \
+VEC3_SWIZZLE2( x, z ); \
+VEC3_SWIZZLE2( y, x ); \
+VEC3_SWIZZLE2( y, y ); \
+VEC3_SWIZZLE2( y, z ); \
+VEC3_SWIZZLE2( z, x ); \
+VEC3_SWIZZLE2( z, y ); \
+VEC3_SWIZZLE2( z, z );
+
 union vec3
 {
 	struct { float x, y, z; };
-
-	VEC3_SWIZZLE2( x, x );
-	VEC3_SWIZZLE2( y, y );
-	VEC3_SWIZZLE2( z, z );
-
-	VEC3_SWIZZLE2( x, y );
-
+	
 	vec3( void )                         : x{  0 }, y{  0 }, z{  0 } {};
 	vec3( float _v )                     : x{ _v }, y{ _v }, z{ _v } {};
 	vec3( float _x, float _y, float _z ) : x{ _x }, y{ _y }, z{ _z } {};
-	
+
+	VEC3_SWIZZLE2_MEMBERS;
+
 	decimal_type_t& operator []( size_t _index ) {
 		return ( &x )[ _index ];
 	}
@@ -263,15 +280,22 @@ int main( int argc, char* argv[] )
     sogSwapBuffers();
     sogClear( 255, 0, 255, 255 );
 
-	auto kernels = sogBuildKernelList( &context, 64, 64 );
+	auto kernels = sogBuildKernelList( &context, 128, 128 );
 
     int quit = 0;
     SDL_Event event;
 
+	std::chrono::high_resolution_clock timer;
+	auto start = timer.now();
+
     while( !quit )
     {
-        
-        double deltatime = 1.0 / 60.0; //  static_cast<double>( elapsed.count() ) / 1000;
+		auto stop = timer.now();
+		double deltatimeMs = std::chrono::duration_cast<std::chrono::microseconds>( stop - start ).count() / 1000.0;
+		double deltatime = deltatimeMs / 1000.0;
+
+		start = timer.now();
+
         g_time += deltatime;
 
 		while ( SDL_PollEvent( &event ) )
@@ -280,7 +304,7 @@ int main( int argc, char* argv[] )
         sogPerPixel( kernels, shaderCreation );
 
         std::string title = "Soggy!    FPS: ";
-        title += std::to_string( 1 );
+        title += std::to_string( 1.0 / deltatime );
         SDL_SetWindowTitle( context.pWindow, title.c_str() );
 
 		sogSwapBuffers();
