@@ -33,6 +33,36 @@ union SogColor
     uint32_t dword = 255;
 };
 
+struct SogKernel
+{
+	uint32_t* pBase;
+	uint32_t size;
+	uint32_t baseX, baseY;
+	uint32_t width, height;
+	uint32_t endX, endY;
+};
+
+std::vector<SogKernel> sogBuildKernelList( SogContext* _pContext, uint32_t _kernelWidth, uint32_t _kernelHeight ) 
+{
+	uint32_t texWidth  = _pContext->width;
+	uint32_t texHeight = _pContext->height;
+
+	std::vector<SogKernel> vec{};
+
+	for( uint32_t y = 0; y < texHeight; y += _kernelHeight )
+	{
+		for( uint32_t x = 0; x < texWidth; x += _kernelWidth )
+		{
+			uint32_t kw = std::min( _kernelWidth, ( texWidth - x ) );
+			uint32_t kh = std::min( _kernelWidth, ( texHeight - y ) );
+
+			vec.push_back( { nullptr,0, x, y, kw, kh, x + kw, y + kh } );
+		}
+	}
+	
+	return vec;
+}
+
 void sogSetPixel( uint32_t _x, uint32_t _y, uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a )
 {
     uint32_t offset = _y * context.width + _x;
@@ -65,22 +95,27 @@ void sogSwapBuffers()
     SDL_UpdateWindowSurface( context.pWindow );
 }
 
-void sogPerPixel( SogColor( *_fptr )( uint32_t, uint32_t ) )
+void sogPerPixel( std::vector<SogKernel>& _kernels, SogColor( *_fptr )( uint32_t, uint32_t ) )
 {
     if( _fptr == nullptr )
         return;
 
 	sogBeginDraw( &context );
     uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
-    for( uint32_t y = 0; y < context.height; y++ )
-    {
-        for( uint32_t x = 0; x < context.width; x++ )
-        {
-            SogColor col = _fptr( x, y );
-            uint32_t offset = y * context.width + x;
-            pixels[ offset ] = sogMapRGBA( &context, col.r, col.g, col.b, col.a );
-        }
-    }
+
+	for( auto& k : _kernels )
+	{
+		for( uint32_t y = k.baseY; y < k.endY; y++ )
+		{
+			for( uint32_t x = k.baseX; x < k.endX; x++ )
+			{
+				SogColor col = _fptr( x, y );
+				uint32_t offset = y * context.width + x;
+				pixels[ offset ] = sogMapRGBA( &context, col.r, col.g, col.b, col.a );
+			}
+		}
+	}
+
 	sogEndDraw( &context );
 }
 
@@ -228,6 +263,8 @@ int main( int argc, char* argv[] )
     sogSwapBuffers();
     sogClear( 255, 0, 255, 255 );
 
+	auto kernels = sogBuildKernelList( &context, 64, 64 );
+
     int quit = 0;
     SDL_Event event;
 
@@ -240,7 +277,7 @@ int main( int argc, char* argv[] )
 		while ( SDL_PollEvent( &event ) )
 			quit |= ( event.type == SDL_QUIT );
         
-        sogPerPixel( shaderCreation );
+        sogPerPixel( kernels, shaderCreation );
 
         std::string title = "Soggy!    FPS: ";
         title += std::to_string( 1 );
