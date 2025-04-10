@@ -26,18 +26,18 @@
 
 sog::Context context;
 float g_time = 0.0f;
-sog::vec2f iResolution{};
+sog::vec2 iResolution{};
 
 // https://www.shadertoy.com/view/XsXXDn
-void shaderCreation( sog::vec4f& _outFragColor, sog::vec2f _fragCoord )
+void shaderCreation( sog::vec4& _outFragColor, sog::vec2 _fragCoord )
 {
-	sog::vec2f r = sog::vec2f{ (float)context.width, (float)context.height };
+	sog::vec2 r = sog::vec2{ (float)context.width, (float)context.height };
 
-	sog::vec3f c;
+	sog::vec3 c;
 	float l, z = g_time;
 	for ( int i = 0; i < 3; i++ )
 	{
-		sog::vec2f uv, p = _fragCoord / r;
+		sog::vec2 uv, p = _fragCoord / r;
 		uv = p;
 		p = p - 0.5f;
 		p.x *= r.x / r.y;
@@ -47,7 +47,7 @@ void shaderCreation( sog::vec4f& _outFragColor, sog::vec2f _fragCoord )
 		c[ i ] = 0.01f / sog::length( sog::mod( uv, 1.0f ) - 0.5f );
 	}
 	
-	_outFragColor = sog::vec4f( c / l, g_time );
+	_outFragColor = sog::vec4( c / l, g_time );
 }
 
 struct FramerateCounter
