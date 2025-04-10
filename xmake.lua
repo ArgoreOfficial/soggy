@@ -14,6 +14,8 @@ add_requires("libsdl")
 add_rules "mode.debug"
 add_rules "mode.release"
 
+add_cxxflags("cl::/Zc:preprocessor")
+
 target "soggy"
     set_kind "binary" 
     

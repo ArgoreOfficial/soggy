@@ -2,8 +2,11 @@
 #define SOG_VECTOR3_H
 
 #include <sog/math/vector2.h>
+#include <sog/math/swizzle.h>
 
 namespace sog {
+
+union vec4;
 
 #define VEC3_OPERATOR(_op) \
 VEC_OPERATOR(vec3, decimal_type_t, _op, vec3{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs   } ) \
@@ -25,12 +28,11 @@ union vec3
 	vec3( float _v ) : x{ _v }, y{ _v }, z{ _v } {};
 	vec3( float _x, float _y, float _z ) : x{ _x }, y{ _y }, z{ _z } {};
 
-	SWIZZLE_XY_MEMBERS;
-	SWIZZLE_XYZ_MEMBERS;
-
 	decimal_type_t& operator []( size_t _index ) {
 		return ( &x )[ _index ];
 	}
+
+	SOG_SWIZZLE_XYZ;
 };
 
 VEC_DEFAULT_OPERATORS( VEC3_OPERATOR );
