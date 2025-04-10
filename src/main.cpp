@@ -50,55 +50,6 @@ void shaderCreation( sog::vec4f& _outFragColor, sog::vec2f _fragCoord )
 	_outFragColor = sog::vec4f( c / l, g_time );
 }
 
-#define iterations 7
-#define volsteps 7
-#define pi 3.141592653589793
-
-// https://www.shadertoy.com/view/WcfXRs
-void shaderMilky( sog::vec4f& fragColor, sog::vec2f fragCoord )
-{
-	//Initialize animate time (10x speed)
-	float t = g_time / 0.1,
-	//Fractional starting index
-	f = sog::fract( -t ),
-	//Whole-index for star
-	w = 0.0;
-
-		//Screen uvs, centered and aspect correct (-0.5 to +0.5)
-	sog::vec2f suv = ( fragCoord - iResolution * 0.5 ) / iResolution.y;
-
-	//Prepare the sum of the star colors
-	sog::vec3f rgb{ 0.0f };
-
-	//Loop through 100 stars
-	for( float i = f; i < 1e2; i++ )
-	{
-		//Find the whole-number star index
-		w = std::round( i + t );
-		//Square to prevent linear patterns. sin is a better alternative
-		w *= w; //sin(w)
-		//Pick a color using the index
-		rgb += ( sog::cos( w + sog::vec3f( 0, 1, 2 ) ) + 1. )
-		//Vary the brightness with the index
-		* std::exp( sog::cos( w / .1 ) / .6 )
-		//Fade in and out
-		* std::min( 1e3f - i / .1f + 9.f, i ) / 5e4
-		//Attentuate outward
-		/ sog::length( suv
-		//Set the star position
-		+ .05f * sog::cos( w / .31f + sog::vec2f( 0.f, 5.f ) ) * sqrt( i ) );
-	}
-
-	//Increase contrast
-	rgb *= rgb;
-
-	//Tanh tonemap:
-	//https://www.shadertoy.com/view/ms3BD7
-	rgb = tanh( rgb );
-
-	fragColor = sog::vec4f( rgb, 1.0 );
-}
-
 struct FramerateCounter
 {
 	FramerateCounter() {
