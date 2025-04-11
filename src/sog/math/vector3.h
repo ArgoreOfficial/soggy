@@ -13,13 +13,6 @@ VEC_OPERATOR(vec3, decimal_type_t, _op, vec3{ _lhs.x _op _rhs,   _lhs.y _op _rhs
 VEC_OPERATOR(decimal_type_t, vec3, _op, vec3{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z } ) \
 VEC_OPERATOR(vec3,           vec3, _op, vec3{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z } ) 
 
-#define SWIZZLE_XYZ_MEMBERS \
-SWIZZLE_2_XYZ( x, z, float ); \
-SWIZZLE_2_XYZ( y, z, float ); \
-SWIZZLE_2_XYZ( z, x, float ); \
-SWIZZLE_2_XYZ( z, y, float ); \
-SWIZZLE_2_XYZ( z, z, float );
-
 union vec3
 {
 	struct { float x, y, z; };

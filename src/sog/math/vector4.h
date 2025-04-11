@@ -10,15 +10,6 @@ VEC_OPERATOR(vec4, decimal_type_t, _op, vec4{ _lhs.x _op _rhs,   _lhs.y _op _rhs
 VEC_OPERATOR(decimal_type_t, vec4, _op, vec4{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z, _lhs   _op _rhs.w } ) \
 VEC_OPERATOR(vec4,           vec4, _op, vec4{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z, _lhs.w _op _rhs.w } ) 
 
-#define SWIZZLE_XYZW_MEMBERS \
-SWIZZLE_2_XYZW( x, w, float ); \
-SWIZZLE_2_XYZW( y, w, float ); \
-SWIZZLE_2_XYZW( z, w, float ); \
-SWIZZLE_2_XYZW( w, x, float ); \
-SWIZZLE_2_XYZW( w, y, float ); \
-SWIZZLE_2_XYZW( w, z, float ); \
-SWIZZLE_2_XYZW( w, w, float );
-
 union vec4
 {
 	struct { float x, y, z, w; };
@@ -28,13 +19,11 @@ union vec4
 	
 	vec4( const vec3& _vec, float _w ) : x{ _vec.x }, y{ _vec.y }, z{ _vec.z }, w{ _w } {}
 
-	SWIZZLE_XY_MEMBERS;
-	SWIZZLE_XYZ_MEMBERS;
-	SWIZZLE_XYZW_MEMBERS;
-
 	decimal_type_t& operator []( size_t _index ) {
 		return ( &x )[ _index ];
 	}
+
+	SOG_SWIZZLE_XYZW;
 };
 
 VEC_DEFAULT_OPERATORS( VEC4_OPERATOR );
