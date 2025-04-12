@@ -111,37 +111,87 @@ struct FramerateCounter
 	std::chrono::high_resolution_clock timer;
 };
 
-struct Viewport
-{
-	int32_t width = 1920;
-	int32_t height = 1061;
-};
 
-struct Range
+inline uint32_t xyToBufferOffset( uint32_t p_x, uint32_t p_y, uint32_t p_width ) 
 {
-	float start;
-	float end;
-};
-
-constexpr float mapRange( float _v, float _fromStart, float _fromEnd, float _toStart, float _toEnd ) {
-	double slope = ( _toEnd - _toStart ) / ( _fromEnd - _fromStart );
-	return _toStart + slope * ( _v - _fromStart );
+	return p_y * p_width + p_x;
 }
 
-float mapRange( float _v, const Range& _from, const Range& _to ) {
-	return mapRange( _v, _from.start, _from.end, _to.start, _to.end );
+/*
+plotLineLow(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
+	dx = x1 - x0
+	dy = y1 - y0
+	yi = 1
+	if dy < 0
+		yi = -1
+		dy = -dy
+	end if
+	D = (2 * dy) - dx
+	y = y0
+
+	for x from x0 to x1
+		plot(x, y)
+		if D > 0
+			y = y + yi
+			D = D + (2 * (dy - dx))
+		else
+			D = D + 2*dy
+		end if
 }
+
+void plotLineHigh(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
+	int32_t dx = x1 - x0;
+	int32_t dy = y1 - y0;
+	int32_t xi = 1;
+	if ( dx < 0 ) {
+		xi = -1;
+		dx = -dx;
+	}
+	int32_t D = (2 * dx) - dy;
+	int32_t x = x0;
+
+	for ( int32_t y = y0; y <= y1; y++ ) {
+		//plot(x, y)
+		if ( D > 0 ) {
+			x = x + xi;
+			D = D + (2 * dx - dy));
+		} else {
+			D = D + 2*dx;
+		}
+	}
+}
+*/
+
+void sogTriangle( const sog::vec2& p_a, const sog::vec2& p_b, const sog::vec2& p_c )
+{
+	sog::beginDraw( &context );
+	uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
+
+	sog::gfx::raster_triangle( pixels, context.width, context.height, p_a, p_b, p_c );
+
+	/*
+	sog::gfx::line( pixels, context.width, context.height, p_a.x, p_a.y, p_b.x, p_b.y );
+	sog::gfx::line( pixels, context.width, context.height, p_b.x, p_b.y, p_c.x, p_c.y );
+	sog::gfx::line( pixels, context.width, context.height, p_c.x, p_c.y, p_a.x, p_a.y );
+	*/
+
+	sog::endDraw( &context );
+}
+
+
+inline double sinn( double _x ) { return sin( _x ) * 0.5 + 0.5; }
+inline double cosn( double _x ) { return cos( _x ) * 0.5 + 0.5; }
+
+inline float sinfn( float _x ) { return sinf( _x ) * 0.5f + 0.5f; }
+inline float cosfn( float _x ) { return cosf( _x ) * 0.5f + 0.5f; }
 
 int main( int argc, char* argv[] )
 {
 	context = sog::initializeContext( 720, 480 );
 	iResolution = { (float)context.width, (float)context.height };
 
-	constexpr float v = mapRange( 0.5f, 0, 1, -1, 1 );
-
     sog::swapBuffers( &context );
-    sog::gfx::clear( &context, 255, 0, 255, 255 );
-
+    
 	const uint32_t size = (720 * 480) / ( std::thread::hardware_concurrency() - 1 );
 	sog::KernelList kernels = sog::buildKernelList( &context, size );
 
@@ -157,8 +207,19 @@ int main( int argc, char* argv[] )
 
 		while ( SDL_PollEvent( &event ) )
 			quit |= ( event.type == SDL_QUIT );
-        
-        sog::gfx::runShader( &kernels, shaderCreation );
+		
+		sog::gfx::clear( &context, sog::vec4(0,0,0,1).bgra8 );
+
+        // sog::gfx::runShader( &kernels, shaderCreation );
+
+		sog::vec4 base{ 0, 16, 16, 0 };
+		base += { 0, sinf( g_time ) * 64.f, cosf( g_time ) * 64.f, 0 };
+
+		sog::vec2 point_0 = base.yz;
+		sog::vec2 point_1{ 300.0f, 200.0f };
+		sog::vec2 point_2{ 150, 400 };
+
+		sogTriangle( point_0, point_1, point_2 );
 
         std::string title = "Soggy!";
         title += "  FPS:" + std::to_string( 1.0 / ftcounter.getAverageDeltaTime() );
