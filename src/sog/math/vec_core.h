@@ -1,6 +1,8 @@
 #ifndef SOG_MATH_VEC_CORE_H
 #define SOG_MATH_VEC_CORE_H
 
+#include <immintrin.h>
+
 namespace sog {
 
 typedef float decimal_type_t;
