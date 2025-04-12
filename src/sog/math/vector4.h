@@ -54,12 +54,12 @@ union vec4
 
 VEC_DEFAULT_OPERATORS( VEC4_OPERATOR );
 
-
 union vec4i
 {
 	struct { int32_t x, y, z, w; };
 // #ifdef SOG_SIMD
-	__m128i v128;
+	__m128i v128i;
+	vec4i( __m128i p_v128i ) : v128i{ p_v128i } {}
 // #endif
 
 	vec4i( void ) : x{ 0 }, y{ 0 }, z{ 0 }, w{ 0 } {}
@@ -70,15 +70,24 @@ union vec4i
 	}
 
 	vec4i& operator +=( const vec4i& p_rhs ) {
-		v128 = _mm_add_epi32( v128, p_rhs.v128 );;
+		v128i = _mm_add_epi32( v128i, p_rhs.v128i );
 		return *this;
 	}
 
 	vec4i& operator -=( const vec4i& p_rhs ) {
-		v128 = _mm_add_epi32( v128, p_rhs.v128 );
+		v128i = _mm_add_epi32( v128i, p_rhs.v128i );
 		return *this;
 	}
+
 };
+
+inline vec4i operator +( const vec4i& p_lhs, const vec4i& p_rhs ) {
+	return vec4i{ _mm_add_epi32( p_lhs.v128i, p_rhs.v128i ) };
+}
+
+inline vec4i operator -( const vec4i& p_lhs, const vec4i& p_rhs ) {
+	return vec4i{ _mm_sub_epi32( p_lhs.v128i, p_rhs.v128i ) };
+}
 
 }
 

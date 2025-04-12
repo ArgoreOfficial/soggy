@@ -116,23 +116,10 @@ struct vec2i
 	int32_t x, y;
 };
 
-int32_t determinant( vec2i p_0, vec2i p_1, vec2i p_2 )
+int32_t determinant( vec2i p_a, vec2i p_b, vec2i p_c )
 {
-
-	/**
-	* 
-	* | a b |
-	* | c d |
-	* 
-	* det = ad - bc
-	* 
-	* | bx-ax  cx-ax |
-	* | by-ay  cy-ay |
-	* 
-	*/
-
-	return ( p_1.x - p_0.x ) * ( p_2.y - p_0.y ) -
-		   ( p_2.x - p_0.x ) * ( p_1.y - p_0.y );
+	return ( p_b.x - p_a.x ) * ( p_c.y - p_a.y ) - 
+		   ( p_b.y - p_a.y ) * ( p_c.x - p_a.x );
 }
 
 void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uint32_t p_buffer_height, sog::vec2 v0, sog::vec2 v1, sog::vec2 v2 ) {
@@ -141,10 +128,9 @@ void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uin
 	const int32_t min_y = sog::clamp<int32_t>( sog::min( v0.y, v1.y, v2.y ), 0, p_buffer_height );
 	const int32_t max_y = sog::clamp<int32_t>( sog::max( v0.y, v1.y, v2.y ), 0, p_buffer_height );
 
-	// Triangle setup
-	int32_t A01 = v0.y - v1.y; int32_t B01 = v1.x - v0.x;
-	int32_t A12 = v1.y - v2.y; int32_t B12 = v2.x - v1.x;
-	int32_t A20 = v2.y - v0.y; int32_t B20 = v0.x - v2.x;
+	const int32_t A01 = v0.y - v1.y; const int32_t B01 = v1.x - v0.x;
+	const int32_t A12 = v1.y - v2.y; const int32_t B12 = v2.x - v1.x;
+	const int32_t A20 = v2.y - v0.y; const int32_t B20 = v0.x - v2.x;
 
 	// Barycentric coordinates at minX/minY corner
 	vec2i p = vec2i{ min_x, min_y };
@@ -168,7 +154,13 @@ void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uin
 			if ( ( w0 | w1 | w2 ) >= 0 )
 			{
 				uint32_t buffer_offset = p.y * p_buffer_width + p.x;
-				p_pixels[ buffer_offset ] = sog::vec4( w0, w1, w2, 1.0f ).bgra8;
+				uint32_t total = w0 + w1 + w2;
+
+				const float b0 = (float)w0 / (float)total;
+				const float b1 = (float)w1 / (float)total;
+				const float b2 = (float)w2 / (float)total;
+
+				p_pixels[ buffer_offset ] = sog::vec4( b0, b1, b2, 1.0f ).bgra8;
 			}
 
 			// One step to the right
