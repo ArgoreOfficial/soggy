@@ -13,20 +13,47 @@ union color
 
 	color( const sog::vec4& _vec )
 	{
-		r = sog::clamp<float>( _vec.x, 0.0f, 1.0f ) * 255;
-		g = sog::clamp<float>( _vec.y, 0.0f, 1.0f ) * 255;
-		b = sog::clamp<float>( _vec.z, 0.0f, 1.0f ) * 255;
-		a = sog::clamp<float>( _vec.w, 0.0f, 1.0f ) * 255;
+		rgba.r = sog::clamp<float>( _vec.x, 0.0f, 1.0f ) * 255;
+		rgba.g = sog::clamp<float>( _vec.y, 0.0f, 1.0f ) * 255;
+		rgba.b = sog::clamp<float>( _vec.z, 0.0f, 1.0f ) * 255;
+		rgba.a = sog::clamp<float>( _vec.w, 0.0f, 1.0f ) * 255;
 	}
+
+	color( uint32_t p_ui32 ) {
+		rgba.dword = p_ui32;
+	}
+
+	color( uint8_t p_r, uint8_t p_g, uint8_t p_b, uint8_t p_a ) {
+		rgba.r = p_r;
+		rgba.b = p_b;
+		rgba.g = p_g;
+		rgba.a = p_a;
+	}
+
 
 	struct
 	{
-		uint8_t a;
-		uint8_t b;
-		uint8_t g;
-		uint8_t r;
-	};
-	uint32_t dword = 255;
+		struct
+		{
+			uint8_t r;
+			uint8_t g;
+			uint8_t b;
+			uint8_t a;
+		};
+		uint32_t dword;
+	} rgba;
+
+	union
+	{
+		struct
+		{
+			uint8_t b;
+			uint8_t g;
+			uint8_t r;
+			uint8_t a;
+		};
+		uint32_t dword;
+	} bgra;
 };
 
 

@@ -122,7 +122,22 @@ int32_t determinant( vec2i p_a, vec2i p_b, vec2i p_c )
 		   ( p_b.y - p_a.y ) * ( p_c.x - p_a.x );
 }
 
+uint32_t pack_rgba8( uint8_t p_r, uint8_t p_g, uint8_t p_b, uint8_t p_a ) {
+	uint32_t v = p_r; 
+	v |= p_g << 8; 
+	v |= p_b << 16; 
+	v |= p_a << 24;
+	return v;
+}
+
+uint32_t pack_bgra8( uint8_t p_r, uint8_t p_g, uint8_t p_b, uint8_t p_a ) {
+	return pack_rgba8( p_b, p_g, p_r, p_a );
+}
+
 void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uint32_t p_buffer_height, sog::vec2 v0, sog::vec2 v1, sog::vec2 v2 ) {
+	if ( !p_pixels )
+		return;
+	
 	const int32_t min_x = sog::clamp<int32_t>( sog::min( v0.x, v1.x, v2.x ), 0, p_buffer_width );
 	const int32_t max_x = sog::clamp<int32_t>( sog::max( v0.x, v1.x, v2.x ), 0, p_buffer_width );
 	const int32_t min_y = sog::clamp<int32_t>( sog::min( v0.y, v1.y, v2.y ), 0, p_buffer_height );
@@ -132,47 +147,38 @@ void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uin
 	const int32_t A12 = v1.y - v2.y; const int32_t B12 = v2.x - v1.x;
 	const int32_t A20 = v2.y - v0.y; const int32_t B20 = v0.x - v2.x;
 
-	// Barycentric coordinates at minX/minY corner
 	vec2i p = vec2i{ min_x, min_y };
-	int32_t w0_row = determinant( v1, v2, p );
-	int32_t w1_row = determinant( v2, v0, p );
-	int32_t w2_row = determinant( v0, v1, p );
+	int32_t bary0_row = determinant( v1, v2, p );
+	int32_t bary1_row = determinant( v2, v0, p );
+	int32_t bary2_row = determinant( v0, v1, p );
 	
-	uint32_t red = sog::vec4{ 1.0f, 0.0f, 0.0f, 1.0f }.bgra8;
-
-	// Rasterize
 	for ( p.y = min_y; p.y <= max_y; p.y++ )
 	{
-		// Barycentric coordinates at start of row
-		int32_t w0 = w0_row;
-		int32_t w1 = w1_row;
-		int32_t w2 = w2_row;
+		int32_t bary0_col = bary0_row;
+		int32_t bary1_col = bary1_row;
+		int32_t bary2_col = bary2_row;
 
 		for ( p.x = min_x; p.x <= max_x; p.x++ )
 		{
-			// If p is on or inside all edges, render pixel.
-			if ( ( w0 | w1 | w2 ) >= 0 )
+			if ( ( bary0_col | bary1_col | bary2_col ) >= 0 )
 			{
 				uint32_t buffer_offset = p.y * p_buffer_width + p.x;
-				uint32_t total = w0 + w1 + w2;
+				int32_t total = bary0_col + bary1_col + bary2_col;
 
-				const float b0 = (float)w0 / (float)total;
-				const float b1 = (float)w1 / (float)total;
-				const float b2 = (float)w2 / (float)total;
+				// float real_bary0 = (float)bary0 / (float)total;
 
-				p_pixels[ buffer_offset ] = sog::vec4( b0, b1, b2, 1.0f ).bgra8;
+				p_pixels[ buffer_offset ] = pack_bgra8( (bary0_col*255) / total, (bary1_col*255) / total, (bary2_col*255) / total, 255 );
 			}
 
-			// One step to the right
-			w0 += A12;
-			w1 += A20;
-			w2 += A01;
+			bary0_col += A12;
+			bary1_col += A20;
+			bary2_col += A01;
 		}
 
 		// One row step
-		w0_row += B12;
-		w1_row += B20;
-		w2_row += B01;
+		bary0_row += B12;
+		bary1_row += B20;
+		bary2_row += B01;
 	}
 }
 
