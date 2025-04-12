@@ -6,7 +6,7 @@
 #include <sog/math/vector3.h>
 #include <sog/math/vector4.h>
 
-#define GEN_STD_DEF(_f)  inline decimal_type_t _f( const decimal_type_t& _x ) { return std::_f( _x ); }
+#define GEN_STD_DEF(_f)  inline float _f( const float& _x ) { return std::_f( _x ); }
 #define VEC2_STD_DEF(_f) inline vec2 _f( const vec2& _v ) { return { std::_f( _v.x ), std::_f( _v.y ) }; }
 #define VEC3_STD_DEF(_f) inline vec3 _f( const vec3& _v ) { return { std::_f( _v.x ), std::_f( _v.y ), std::_f( _v.z ) }; }
 #define VEC4_STD_DEF(_f) inline vec4 _f( const vec4& _v ) { return { std::_f( _v.x ), std::_f( _v.y ), std::_f( _v.z ), std::_f( _v.w ) }; }
@@ -18,7 +18,7 @@ VEC3_STD_DEF( _f ); \
 VEC4_STD_DEF( _f );
 
 #define VEC_GENERIC(_func, ...) \
-inline decimal_type_t _func( const decimal_type_t& _x ) { return __VA_ARGS__; } \
+inline float _func( const float& _x ) { return __VA_ARGS__; } \
 inline vec2 _func( const vec2& _x ) { return __VA_ARGS__; } \
 inline vec3 _func( const vec3& _x ) { return __VA_ARGS__; } \
 inline vec4 _func( const vec4& _x ) { return __VA_ARGS__; } 
@@ -40,15 +40,15 @@ inline Ty clamp( const Ty& _v, const Ty& _min, const Ty& _max )
 	return t > _max ? _max : t;
 }
 
-inline decimal_type_t length( const vec2& _vec2 ) {
+inline float length( const vec2& _vec2 ) {
 	return std::sqrt( _vec2.x * _vec2.x + _vec2.y * _vec2.y );
 }
 
-inline vec2 mod( const vec2& _x, decimal_type_t _y ) {
+inline vec2 mod( const vec2& _x, float _y ) {
 	return _x - _y * floor( _x / _y );
 }
 
-inline decimal_type_t dot( const vec3& _a, const vec3& _b ) {
+inline float dot( const vec3& _a, const vec3& _b ) {
 	return _a.x * _b.x + _a.y * _b.y + _a.z * _b.z;
 }
 

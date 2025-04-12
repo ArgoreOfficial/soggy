@@ -9,9 +9,9 @@ namespace sog {
 union vec4;
 
 #define VEC3_OPERATOR(_op) \
-VEC_OPERATOR(vec3, decimal_type_t, _op, vec3{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs   } ) \
-VEC_OPERATOR(decimal_type_t, vec3, _op, vec3{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z } ) \
-VEC_OPERATOR(vec3,           vec3, _op, vec3{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z } ) 
+VEC_OPERATOR( vec3, float, _op, vec3{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs   } ) \
+VEC_OPERATOR(float,  vec3, _op, vec3{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z } ) \
+VEC_OPERATOR( vec3,  vec3, _op, vec3{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z } ) 
 
 union vec3
 {
@@ -21,7 +21,7 @@ union vec3
 	vec3( float _v ) : x{ _v }, y{ _v }, z{ _v } {};
 	vec3( float _x, float _y, float _z ) : x{ _x }, y{ _y }, z{ _z } {};
 
-	decimal_type_t& operator []( size_t _index ) {
+	float& operator []( size_t _index ) {
 		return ( &x )[ _index ];
 	}
 

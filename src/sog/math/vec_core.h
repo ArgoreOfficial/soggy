@@ -3,12 +3,6 @@
 
 #include <immintrin.h>
 
-namespace sog {
-
-typedef float decimal_type_t;
-
-}
-
 #define VEC_OPERATOR(_lhsTy,_rhsTy,_op,...) \
 inline auto operator##_op##( const _lhsTy& _lhs, const _rhsTy& _rhs ) { \
 	return __VA_ARGS__; \
