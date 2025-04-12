@@ -52,6 +52,26 @@ inline decimal_type_t dot( const vec3& _a, const vec3& _b ) {
 	return _a.x * _b.x + _a.y * _b.y + _a.z * _b.z;
 }
 
+template<typename Ty>
+Ty min( Ty p_a, Ty p_b ) {
+	return std::min<Ty>( p_a, p_b );
+}
+
+template<typename Ty, typename... Args>
+Ty min( Ty p_a, Ty p_b, Args... p_args ) {
+	return sog::min<Ty>( p_a, sog::min<Ty>( p_b, p_args... ) );
+}
+
+template<typename Ty>
+Ty max( Ty p_a, Ty p_b ) {
+	return std::max<Ty>( p_a, p_b );
+}
+
+template<typename Ty, typename... Args>
+Ty max( Ty p_a, Ty p_b, Args... p_args ) {
+	return sog::max<Ty>( p_a, sog::max<Ty>( p_b, p_args... ) );
+}
+
 }
 
 #endif
