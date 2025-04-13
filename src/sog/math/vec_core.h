@@ -2,6 +2,7 @@
 #define SOG_MATH_VEC_CORE_H
 
 #include <immintrin.h>
+#include <stdint.h>
 
 #define VEC_OPERATOR(_lhsTy,_rhsTy,_op,...) \
 inline auto operator##_op##( const _lhsTy& _lhs, const _rhsTy& _rhs ) { \

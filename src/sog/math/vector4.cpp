@@ -2,6 +2,7 @@
 
 #include <sog/math.h>
 
+
 sog::vec4::rgba8_t::operator uint32_t()
 {
 	union { struct { uint8_t r, g, b, a; }; uint32_t i; } c;

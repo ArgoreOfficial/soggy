@@ -1,7 +1,10 @@
 #ifndef SOG_MATH_H
 #define SOG_MATH_H
 
+#include <stdint.h>
+#include <algorithm>
 #include <cmath>
+
 #include <sog/math/vector2.h>
 #include <sog/math/vector3.h>
 #include <sog/math/vector4.h>
@@ -53,22 +56,22 @@ inline float dot( const vec3& _a, const vec3& _b ) {
 }
 
 template<typename Ty>
-Ty min( Ty p_a, Ty p_b ) {
+inline Ty min( Ty p_a, Ty p_b ) {
 	return std::min<Ty>( p_a, p_b );
 }
 
 template<typename Ty, typename... Args>
-Ty min( Ty p_a, Ty p_b, Args... p_args ) {
+inline Ty min( Ty p_a, Ty p_b, Args... p_args ) {
 	return sog::min<Ty>( p_a, sog::min<Ty>( p_b, p_args... ) );
 }
 
 template<typename Ty>
-Ty max( Ty p_a, Ty p_b ) {
+inline Ty max( Ty p_a, Ty p_b ) {
 	return std::max<Ty>( p_a, p_b );
 }
 
 template<typename Ty, typename... Args>
-Ty max( Ty p_a, Ty p_b, Args... p_args ) {
+inline Ty max( Ty p_a, Ty p_b, Args... p_args ) {
 	return sog::max<Ty>( p_a, sog::max<Ty>( p_b, p_args... ) );
 }
 

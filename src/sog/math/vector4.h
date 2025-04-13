@@ -2,14 +2,11 @@
 #define SOG_VECTOR4_H
 
 #include <sog/math/vector3.h>
-#include <stdint.h>
+
+#define SOG_ENABLE_SWIZZLE_XYZW
+#include <sog/math/swizzle_xyzw.h>
 
 namespace sog {
-
-#define VEC4_OPERATOR(_op) \
-VEC_OPERATOR( vec4, float, _op, vec4{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs,   _lhs.w _op _rhs   } ) \
-VEC_OPERATOR(float,  vec4, _op, vec4{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z, _lhs   _op _rhs.w } ) \
-VEC_OPERATOR( vec4,  vec4, _op, vec4{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z, _lhs.w _op _rhs.w } ) 
 
 union vec4
 {
@@ -29,9 +26,11 @@ union vec4
 		x{ _x }, y{ _y }, z{ _z }, w{ _w } 
 	{ }
 	
-	vec4( const vec3& _vec, float _w ) : 
-		xyz{ _vec.xyz }, w{ _w }
-	{ }
+	vec4( const vec3& _vec, float _w ) :
+		xyz( _vec )
+	{ 
+		w = _w;
+	}
 
 	float& operator []( size_t _index ) {
 		return ( &x )[ _index ];

@@ -2,7 +2,9 @@
 #define SOG_VECTOR2_H
 
 #include <sog/math/vec_core.h>
-#include <sog/math/swizzle.h>
+
+#define SOG_ENABLE_SWIZZLE_XY
+#include <sog/math/swizzle_xy.h>
 
 namespace sog {
 
@@ -43,6 +45,7 @@ union vec2i
 	// TODO: __m64i for x86 platforms
 
 	vec2i() : x{ 0 }, y{ 0 } {}
+	vec2i( const sog::vec2& p_v2 ) : x{ (int32_t)p_v2.x }, y{ (int32_t)p_v2.y } {}
 	vec2i( int32_t _x, int32_t _y ) : x{ _x }, y{ _y } {}
 
 	int32_t& operator []( size_t _index ) {
@@ -52,7 +55,7 @@ union vec2i
 
 
 VEC_DEFAULT_OPERATORS( VEC2_OPERATOR );
-VEC_DEFAULT_OPERATORS( VEC2i_OPERATOR );
+//VEC_DEFAULT_OPERATORS( VEC2i_OPERATOR );
 
 }
 

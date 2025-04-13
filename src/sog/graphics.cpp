@@ -100,23 +100,8 @@ void sog::gfx::line( uint32_t* p_pixels, const uint16_t p_buffer_width, const ui
 	}
 }
 
-struct vec2i
-{
-	vec2i() = default;
-	vec2i( int32_t p_x, int32_t p_y ) : 
-		x{ p_x }, 
-		y{ p_y } 
-	{};
 
-	vec2i( const sog::vec2& p_vec2 ) : 
-		x{ (int32_t)p_vec2.x }, 
-		y{ (int32_t)p_vec2.y } 
-	{};
-	
-	int32_t x, y;
-};
-
-int32_t determinant( vec2i p_a, vec2i p_b, vec2i p_c )
+int32_t determinant( sog::vec2i p_a, sog::vec2i p_b, sog::vec2i p_c )
 {
 	return ( p_b.x - p_a.x ) * ( p_c.y - p_a.y ) - 
 		   ( p_b.y - p_a.y ) * ( p_c.x - p_a.x );

@@ -2,7 +2,9 @@
 #define SOG_VECTOR3_H
 
 #include <sog/math/vector2.h>
-#include <sog/math/swizzle.h>
+
+#define SOG_ENABLE_SWIZZLE_XYZ
+#include <sog/math/swizzle_xyz.h>
 
 namespace sog {
 
