@@ -162,28 +162,35 @@ void plotLineHigh(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
 }
 */
 
-void sogTriangle( const sog::vec2& p_a, const sog::vec2& p_b, const sog::vec2& p_c )
-{
-	sog::beginDraw( &context );
-	uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
-
-	sog::gfx::raster_triangle( pixels, context.width, context.height, p_a, p_b, p_c );
-
-	/*
-	sog::gfx::line( pixels, context.width, context.height, p_a.x, p_a.y, p_b.x, p_b.y );
-	sog::gfx::line( pixels, context.width, context.height, p_b.x, p_b.y, p_c.x, p_c.y );
-	sog::gfx::line( pixels, context.width, context.height, p_c.x, p_c.y, p_a.x, p_a.y );
-	*/
-
-	sog::endDraw( &context );
-}
-
-
 inline double sinn( double _x ) { return sin( _x ) * 0.5 + 0.5; }
 inline double cosn( double _x ) { return cos( _x ) * 0.5 + 0.5; }
 
 inline float sinfn( float _x ) { return sinf( _x ) * 0.5f + 0.5f; }
 inline float cosfn( float _x ) { return cosf( _x ) * 0.5f + 0.5f; }
+
+sog::vec2 UVs[]{
+	{0,0},
+	{1,0},
+	{1,1}
+};
+
+template<typename Ty>
+Ty lerp( Ty a, Ty b, float t ) { return a + t * ( b - a ); }
+
+static int raster_shader( sog::vec4& p_out, int32_t p_bary0, int32_t p_bary1, int32_t p_bary2 ) 
+{
+	float total = p_bary0 + p_bary1 + p_bary2;
+	if ( total == 0 )
+		return 0; // discard
+	
+	sog::vec3 bary = sog::vec3{ (float)p_bary0, (float)p_bary1, (float)p_bary2 } / total;
+
+	sog::vec2 uv = lerp( UVs[ 0 ], UVs[ 1 ], bary.y );
+	uv = lerp( uv, UVs[ 2 ], bary.z );
+
+	p_out = sog::vec4( uv.x, uv.y, 0, 1 );
+	return 1;
+}
 
 int main( int argc, char* argv[] )
 {
@@ -210,7 +217,7 @@ int main( int argc, char* argv[] )
 		
 		sog::gfx::clear( &context, sog::vec4(0,0,0,1).bgra8 );
 
-		sog::gfx::runShader( &kernels, shaderCreation );
+		// sog::gfx::runShader( &kernels, shaderCreation );
 
 		sog::vec4 base{ 0.0f, 16.0f, 16.0f, 0.0f };
 		base += { 0.0f, sinf( g_time ) * 64.0f, cosf( g_time ) * 64.0f, 0.0f };
@@ -219,7 +226,12 @@ int main( int argc, char* argv[] )
 		sog::vec2 point_1{ 300.0f, 200.0f };
 		sog::vec2 point_2{ 150, 400 };
 		
-		sogTriangle( point_0, point_1, point_2 );
+		sog::beginDraw( &context );
+		uint32_t* pixels = (uint32_t*)context.pBackBuffer->pixels;
+
+		sog::gfx::raster_triangle( raster_shader, pixels, context.width, context.height, point_0, point_1, point_2 );
+
+		sog::endDraw( &context );
 
         std::string title = "Soggy!";
         title += "  FPS:" + std::to_string( 1.0 / ftcounter.getAverageDeltaTime() );

@@ -119,8 +119,8 @@ uint32_t pack_bgra8( uint8_t p_r, uint8_t p_g, uint8_t p_b, uint8_t p_a ) {
 	return pack_rgba8( p_b, p_g, p_r, p_a );
 }
 
-void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uint32_t p_buffer_height, sog::vec2 v0, sog::vec2 v1, sog::vec2 v2 ) {
-	if ( !p_pixels )
+void sog::gfx::raster_triangle( raster_shader_t p_shader, uint32_t* p_pixels, uint32_t p_buffer_width, uint32_t p_buffer_height, sog::vec2 v0, sog::vec2 v1, sog::vec2 v2 ) {
+	if ( !p_pixels || !p_shader )
 		return;
 	
 	const int32_t min_x = sog::clamp<int32_t>( sog::min( v0.x, v1.x, v2.x ), 0, p_buffer_width );
@@ -137,6 +137,8 @@ void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uin
 	int32_t bary1_row = determinant( v2, v0, p );
 	int32_t bary2_row = determinant( v0, v1, p );
 	
+	sog::vec4 v4{};
+
 	for ( p.y = min_y; p.y <= max_y; p.y++ )
 	{
 		int32_t bary0_col = bary0_row;
@@ -150,9 +152,8 @@ void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uin
 				uint32_t buffer_offset = p.y * p_buffer_width + p.x;
 				int32_t total = bary0_col + bary1_col + bary2_col;
 				
-				// float real_bary0 = (float)bary0 / (float)total;
-
-				p_pixels[ buffer_offset ] = pack_bgra8( 255, 255, 255, 255 );
+				if( p_shader( v4, bary0_col, bary1_col, bary2_col ) )
+					p_pixels[ buffer_offset ] = v4.bgra8;
 			}
 
 			bary0_col += A12;

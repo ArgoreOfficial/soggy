@@ -63,13 +63,14 @@ struct KernelList;
 namespace gfx {
 
 typedef void( *shader_main_t )( sog::vec4& p_out, sog::vec2 p_in );
+typedef int( *raster_shader_t )( sog::vec4& p_out, int32_t p_bary0, int32_t p_bary1, int32_t p_bary2 );
 
 void clear( Context* p_context, uint32_t p_rgba8 );
 
 void runShader( KernelList* p_kernel_list, shader_main_t p_shader );
 
 void line( uint32_t* p_pixels, const uint16_t p_buffer_width, const uint16_t p_buffer_height, int16_t p_x0, int16_t p_y0, int16_t p_x1, int16_t p_y1 );
-void raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uint32_t p_buffer_height, sog::vec2 v0, sog::vec2 v1, sog::vec2 v2 );
+void raster_triangle( raster_shader_t p_shader, uint32_t* p_pixels, uint32_t p_buffer_width, uint32_t p_buffer_height, sog::vec2 v0, sog::vec2 v1, sog::vec2 v2 );
 
 }
 
