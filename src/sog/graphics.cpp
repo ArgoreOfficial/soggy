@@ -29,7 +29,7 @@ void sogKernelFunc( sog::Context* p_context, sog::Kernel p_kernel, sog::gfx::sha
 		uint32_t y = offset / p_kernel.baseWidth;
 
 		p_shader( v4col, sog::vec2{ (float)x, (float)y } );
-		p_kernel.pBase[ offset ] = v4col.rgba8;
+		p_kernel.pBase[ offset ] = (uint32_t)v4col.rgba8;
 	}
 }
 
@@ -149,10 +149,10 @@ void sog::gfx::raster_triangle( uint32_t* p_pixels, uint32_t p_buffer_width, uin
 			{
 				uint32_t buffer_offset = p.y * p_buffer_width + p.x;
 				int32_t total = bary0_col + bary1_col + bary2_col;
-
+				
 				// float real_bary0 = (float)bary0 / (float)total;
 
-				p_pixels[ buffer_offset ] = pack_bgra8( (bary0_col*255) / total, (bary1_col*255) / total, (bary2_col*255) / total, 255 );
+				p_pixels[ buffer_offset ] = pack_bgra8( 255, 255, 255, 255 );
 			}
 
 			bary0_col += A12;

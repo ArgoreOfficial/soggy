@@ -210,15 +210,15 @@ int main( int argc, char* argv[] )
 		
 		sog::gfx::clear( &context, sog::vec4(0,0,0,1).bgra8 );
 
-        // sog::gfx::runShader( &kernels, shaderCreation );
+		sog::gfx::runShader( &kernels, shaderCreation );
 
-		sog::vec4 base{ 0, 16, 16, 0 };
-		base += { 0, sinf( g_time ) * 64.f, cosf( g_time ) * 64.f, 0 };
+		sog::vec4 base{ 0.0f, 16.0f, 16.0f, 0.0f };
+		base += { 0.0f, sinf( g_time ) * 64.0f, cosf( g_time ) * 64.0f, 0.0f };
 
 		sog::vec2 point_0 = base.yz;
 		sog::vec2 point_1{ 300.0f, 200.0f };
 		sog::vec2 point_2{ 150, 400 };
-
+		
 		sogTriangle( point_0, point_1, point_2 );
 
         std::string title = "Soggy!";
