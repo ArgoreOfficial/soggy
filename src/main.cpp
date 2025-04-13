@@ -199,7 +199,7 @@ int main( int argc, char* argv[] )
     SDL_Event event;
 
 	FramerateCounter ftcounter{};
-		
+
     while( !quit )
     {
 		ftcounter.tick();

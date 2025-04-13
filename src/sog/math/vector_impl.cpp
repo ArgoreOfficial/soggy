@@ -3,10 +3,6 @@
 #include <sog/math/vector3.h>
 #include <sog/math/vector4.h>
 
-SOG_SWIZZLE_OP_XY;
-SOG_SWIZZLE_OP_XYZ;
-SOG_SWIZZLE_OP_XYZW;
-
 /**
  * @brief The purpose of these tests are to validate that all swizzle functions
  * have been defined and declared properly. If this compiles, all is good.

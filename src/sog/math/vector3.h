@@ -8,8 +8,6 @@
 
 namespace sog {
 
-union vec4;
-
 #define VEC3_OPERATOR(_op) \
 VEC_OPERATOR( vec3, float, _op, vec3{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs   } ) \
 VEC_OPERATOR(float,  vec3, _op, vec3{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z } ) \

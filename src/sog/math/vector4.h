@@ -8,6 +8,11 @@
 
 namespace sog {
 
+#define VEC4_OPERATOR(_op) \
+VEC_OPERATOR(sog::vec4,     float, _op, sog::vec4{ _lhs.x _op _rhs,   _lhs.y _op _rhs,   _lhs.z _op _rhs,   _lhs.w _op _rhs   } ) \
+VEC_OPERATOR(    float, sog::vec4, _op, sog::vec4{ _lhs   _op _rhs.x, _lhs   _op _rhs.y, _lhs   _op _rhs.z, _lhs   _op _rhs.w } ) \
+VEC_OPERATOR(sog::vec4, sog::vec4, _op, sog::vec4{ _lhs.x _op _rhs.x, _lhs.y _op _rhs.y, _lhs.z _op _rhs.z, _lhs.w _op _rhs.w } ) 
+
 union vec4
 {
 	struct { float x, y, z, w; };
