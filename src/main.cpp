@@ -192,6 +192,259 @@ static int raster_shader( sog::vec4& p_out, int32_t p_bary0, int32_t p_bary1, in
 	return 1;
 }
 
+
+
+// new swizzle
+
+
+
+template<size_t Comp>
+struct swizzle_scalar
+{
+	float buf[ 1 ];
+
+	float& operator=( const float _v ) {
+		buf[ Comp ] = _v;
+		return buf[ Comp ];
+	}
+	
+	float& operator[]( const size_t _idx )       { return buf[ _idx ]; }
+	float  operator[]( const size_t _idx ) const { return buf[ _idx ]; }
+
+	operator float() const { return buf[ Comp ]; }
+	
+	float operator++( int ) { return buf[ Comp ]++; }
+	float operator++()      { return ++buf[ Comp ]; }
+	float operator--( int ) { return buf[ Comp ]--; }
+	float operator--()      { return --buf[ Comp ]; }
+};
+
+template<typename VecTy, size_t Size, size_t Comp1, size_t Comp2>
+struct swizzle_vec2
+{
+	float buf[ Size ];
+
+	swizzle_vec2( void ) = default;
+		
+	float& operator[]( const size_t _idx )       { return buf[ _idx ]; }
+	float  operator[]( const size_t _idx ) const { return buf[ _idx ]; }
+
+	inline operator VecTy() {
+		VecTy t{};
+		t[ 0 ] = buf[ Comp1 ];
+		t[ 1 ] = buf[ Comp2 ];
+		return t;
+	}
+
+	inline VecTy operator=( const VecTy& _vec ) {
+		buf[ Comp1 ] = _vec[ 0 ];
+		buf[ Comp2 ] = _vec[ 1 ];
+		return _vec;
+	}
+	
+};
+
+template<typename VecTy, size_t Size, size_t Comp1, size_t Comp2, size_t Comp3>
+struct swizzle_vec3
+{
+	float buf[ Size ];
+
+	swizzle_vec3( void ) = default;
+	swizzle_vec3( const float _x, const float _y, const float _z ) { 
+		buf[ Comp1 ] = _x; 
+		buf[ Comp2 ] = _y; 
+		buf[ Comp3 ] = _z; 
+	}
+
+	float& operator[]( const size_t _idx )       { return buf[ _idx ]; }
+	float  operator[]( const size_t _idx ) const { return buf[ _idx ]; }
+
+	inline operator VecTy() {
+		VecTy t{};
+		t[ 0 ] = buf[ Comp1 ];
+		t[ 1 ] = buf[ Comp2 ];
+		t[ 2 ] = buf[ Comp3 ];
+		return t;
+	}
+
+	inline VecTy operator=( const VecTy& _vec ) { 
+		return VecTy{ 
+			buf[ Comp1 ] = _vec.x, 
+			buf[ Comp2 ] = _vec.y, 
+			buf[ Comp3 ] = _vec.z 
+		}; 
+	}
+};
+
+template<typename VecTy, size_t Size, size_t Comp1, size_t Comp2, size_t Comp3, size_t Comp4>
+struct swizzle_vec4
+{
+	float buf[ Size ];
+
+	swizzle_vec4( void ) = default;
+	swizzle_vec4( const float _x, const float _y, const float _z, const float _w ) {
+		buf[ Comp1 ] = _x;
+		buf[ Comp2 ] = _y;
+		buf[ Comp3 ] = _z;
+		buf[ Comp4 ] = _w;
+	}
+
+	float& operator[]( const size_t _idx )       { return buf[ _idx ]; }
+	float  operator[]( const size_t _idx ) const { return buf[ _idx ]; }
+
+	inline operator VecTy() {
+		VecTy t{};
+		t[ 0 ] = buf[ Comp1 ];
+		t[ 1 ] = buf[ Comp2 ];
+		t[ 2 ] = buf[ Comp3 ];
+		t[ 3 ] = buf[ Comp4 ];
+		return t;
+	}
+
+	inline VecTy operator=( const VecTy& _vec ) {
+		return VecTy{
+			buf[ Comp1 ] = _vec.x,
+			buf[ Comp2 ] = _vec.y,
+			buf[ Comp3 ] = _vec.z,
+			buf[ Comp4 ] = _vec.w
+		};
+	}
+};
+
+struct tvec2;
+struct tvec3;
+struct tvec4;
+
+#define SWIZZLE_XY_TYPE2(_a,_ia, _b,_ib                ) swizzle_vec2<tvec2, SIZE, _ia, _ib> _a##_b;
+#define SWIZZLE_XY_TYPE3(_a,_ia, _b,_ib, _c,_ic        ) swizzle_vec3<tvec3, SIZE, _ia, _ib, _ic> _a##_b##_c;
+#define SWIZZLE_XY_TYPE4(_a,_ia, _b,_ib, _c,_ic, _d,_id) swizzle_vec4<tvec4, SIZE, _ia, _ib, _ic, _id> _a##_b##_c##_d;
+
+#define SWIZZLE_XY_CORE2(_a,_i) \
+SWIZZLE_XY_TYPE2(_a,_i,x,0)     \
+SWIZZLE_XY_TYPE2(_a,_i,y,1)
+
+#define SWIZZLE_XY_CORE3(_a,_ia, _b,_ib) \
+SWIZZLE_XY_TYPE3(_a,_ia, _b,_ib, x,0)    \
+SWIZZLE_XY_TYPE3(_a,_ia, _b,_ib, y,1)
+
+#define SWIZZLE_XY_CORE4(_a,_ia, _b,_ib, _c,_ic) \
+SWIZZLE_XY_TYPE4(_a,_ia, _b,_ib, _c,_ic, x,0)    \
+SWIZZLE_XY_TYPE4(_a,_ia, _b,_ib, _c,_ic, y,1)
+
+#define SWIZZLE_XY_C(_a,_ia, _b,_ib)  \
+SWIZZLE_XY_CORE3(_a,_ia, _b,_ib)      \
+SWIZZLE_XY_CORE4(_a,_ia, _b,_ib, x,0) \
+SWIZZLE_XY_CORE4(_a,_ia, _b,_ib, y,1)
+
+#define SWIZZLE_XY_B(_a,_i) \
+SWIZZLE_XY_CORE2(_a,_i)     \
+SWIZZLE_XY_C(_a,_i,x,0)     \
+SWIZZLE_XY_C(_a,_i,y,1)
+
+#define SOG_SWIZZLE_XY \
+SWIZZLE_XY_B(x,0)      \
+SWIZZLE_XY_B(y,1)
+
+
+struct tvec2
+{
+	static constexpr size_t SIZE = 2;
+
+	tvec2() = default;
+	
+	template<typename Ty> tvec2( const Ty& _x, const Ty& _y ) { 
+		buf[ 0 ] = static_cast<float>( _x );
+		buf[ 1 ] = static_cast<float>( _y );
+	}
+	
+	template<typename Ty> tvec2( const Ty& _v ) {
+		buf[ 0 ] = static_cast<float>( _v );
+		buf[ 1 ] = static_cast<float>( _v );
+	}
+
+	float& operator[]( const size_t _idx )       { return buf[ _idx ]; }
+	float  operator[]( const size_t _idx ) const { return buf[ _idx ]; }
+
+	union
+	{
+		float buf[ 2 ] = { 0.0f, 0.0f };
+	
+		swizzle_scalar<0> x, r, u;
+		swizzle_scalar<1> y, g, v;
+		
+		SOG_SWIZZLE_XY;
+
+	};
+};
+
+struct tvec3
+{
+	static constexpr size_t SIZE = 3;
+
+	tvec3() = default;
+
+	template<typename Ty> tvec3( const Ty& _x, const Ty& _y, const Ty& _z ) : xyz{ static_cast<float>( _x ), static_cast<float>( _y ), static_cast<float>( _z ) } {}
+	template<typename Ty> tvec3( const float& _v )                          : xyz{ _v, _v, _v } { }
+
+	float& operator[]( const size_t _idx )       { return buf[ _idx ]; }
+	float  operator[]( const size_t _idx ) const { return buf[ _idx ]; }
+
+	union
+	{
+		float buf[ SIZE ] = { 0.0f, 0.0f, 0.0f };
+
+		swizzle_scalar<0> x, r, u;
+		swizzle_scalar<1> y, g, v;
+		swizzle_scalar<2> z, b;
+
+		swizzle_vec2<tvec2, SIZE, 0, 0> xx;
+		swizzle_vec2<tvec2, SIZE, 0, 1> xy;
+		swizzle_vec2<tvec2, SIZE, 1, 0> yx;
+		swizzle_vec2<tvec2, SIZE, 1, 1> yy;
+
+		swizzle_vec2<tvec2, SIZE, 0, 2> xz;
+
+		swizzle_vec3<tvec3, SIZE, 0, 1, 2> xyz;
+	};
+};
+
+struct tvec4
+{
+	static constexpr size_t SIZE = 4;
+
+	tvec4() = default;
+
+	template<typename Ty> tvec4( const float _x, const float _y, const float _z, const float _w ) 	
+	{
+		buf[ 0 ] = _x;
+		buf[ 1 ] = _y;
+		buf[ 2 ] = _z;
+		buf[ 3 ] = _w;
+	}
+
+	template<typename Ty> tvec4( const float& _v ) {
+		buf[ 0 ] = _v;
+		buf[ 1 ] = _v;
+		buf[ 2 ] = _v;
+		buf[ 3 ] = _v;
+	}
+
+	float& operator[]( const size_t _idx ) { return buf[ _idx ]; }
+	float  operator[]( const size_t _idx ) const { return buf[ _idx ]; }
+
+	union
+	{
+		float buf[ SIZE ] = { 0.0f, 0.0f, 0.0f };
+
+		swizzle_scalar<0> x, r, u;
+		swizzle_scalar<1> y, g, v;
+		swizzle_scalar<2> z, b;
+		swizzle_scalar<3> w, a;
+	};
+};
+
+
+
 int main( int argc, char* argv[] )
 {
 	context = sog::initializeContext( 720, 480 );
@@ -204,6 +457,15 @@ int main( int argc, char* argv[] )
 
     int quit = 0;
     SDL_Event event;
+
+	tvec2 test1{ 5.0f, 2.0f };
+	
+	tvec3 test2{ 3,4,3 }; // 3 1 3 
+	test2.xz = test2.yy;  // 4 4 4
+	test2.x = 3;          // 3 4 4
+
+	tvec3 test3{};
+	test3 = test1.xxx;
 
 	FramerateCounter ftcounter{};
 
