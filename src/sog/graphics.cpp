@@ -29,7 +29,7 @@ void sogKernelFunc( sog::Context* p_context, sog::Kernel p_kernel, sog::gfx::sha
 		uint32_t y = offset / p_kernel.baseWidth;
 
 		p_shader( v4col, sog::vec2{ (float)x, (float)y } );
-		p_kernel.pBase[ offset ] = (uint32_t)v4col.rgba8;
+		p_kernel.pBase[ offset ] = (uint32_t)v4col.rgba8();
 	}
 }
 
@@ -60,8 +60,8 @@ void sog::gfx::line( uint32_t* p_pixels, const uint16_t p_buffer_width, const ui
 	int16_t error = dx + dy;
 	uint32_t buffer_offset;
 
-	uint32_t red   = sog::vec4{ 1.0f, 0.0f, 0.0f, 1.0f }.bgra8; 
-	uint32_t green = sog::vec4{ 0.0f, 1.0f, 0.0f, 1.0f }.bgra8;
+	uint32_t red   = sog::vec4{ 1.0f, 0.0f, 0.0f, 1.0f }.bgra8(); 
+	uint32_t green = sog::vec4{ 0.0f, 1.0f, 0.0f, 1.0f }.bgra8();
 
 	while ( true )
 	{
@@ -103,8 +103,8 @@ void sog::gfx::line( uint32_t* p_pixels, const uint16_t p_buffer_width, const ui
 
 int32_t determinant( sog::vec2i p_a, sog::vec2i p_b, sog::vec2i p_c )
 {
-	return ( p_b.x - p_a.x ) * ( p_c.y - p_a.y ) - 
-		   ( p_b.y - p_a.y ) * ( p_c.x - p_a.x );
+	return ( p_b.x() - p_a.x() ) * ( p_c.y() - p_a.y() ) - 
+		   ( p_b.y() - p_a.y() ) * ( p_c.x() - p_a.x() );
 }
 
 uint32_t pack_rgba8( uint8_t p_r, uint8_t p_g, uint8_t p_b, uint8_t p_a ) {
@@ -123,14 +123,14 @@ void sog::gfx::raster_triangle( raster_shader_t p_shader, uint32_t* p_pixels, ui
 	if ( !p_pixels || !p_shader )
 		return;
 	
-	const int32_t min_x = sog::clamp<int32_t>( sog::min( v0.x, v1.x, v2.x ), 0, p_buffer_width );
-	const int32_t max_x = sog::clamp<int32_t>( sog::max( v0.x, v1.x, v2.x ), 0, p_buffer_width );
-	const int32_t min_y = sog::clamp<int32_t>( sog::min( v0.y, v1.y, v2.y ), 0, p_buffer_height );
-	const int32_t max_y = sog::clamp<int32_t>( sog::max( v0.y, v1.y, v2.y ), 0, p_buffer_height );
+	const int32_t min_x = sog::clamp<int32_t>( sog::min( v0.x(), v1.x(), v2.x() ), 0, p_buffer_width );
+	const int32_t max_x = sog::clamp<int32_t>( sog::max( v0.x(), v1.x(), v2.x() ), 0, p_buffer_width );
+	const int32_t min_y = sog::clamp<int32_t>( sog::min( v0.y(), v1.y(), v2.y() ), 0, p_buffer_height );
+	const int32_t max_y = sog::clamp<int32_t>( sog::max( v0.y(), v1.y(), v2.y() ), 0, p_buffer_height );
 
-	const int32_t A01 = v0.y - v1.y; const int32_t B01 = v1.x - v0.x;
-	const int32_t A12 = v1.y - v2.y; const int32_t B12 = v2.x - v1.x;
-	const int32_t A20 = v2.y - v0.y; const int32_t B20 = v0.x - v2.x;
+	const int32_t A01 = v0.y() - v1.y(); const int32_t B01 = v1.x() - v0.x();
+	const int32_t A12 = v1.y() - v2.y(); const int32_t B12 = v2.x() - v1.x();
+	const int32_t A20 = v2.y() - v0.y(); const int32_t B20 = v0.x() - v2.x();
 
 	vec2i p = vec2i{ min_x, min_y };
 	int32_t bary0_row = determinant( v1, v2, p );
@@ -139,21 +139,21 @@ void sog::gfx::raster_triangle( raster_shader_t p_shader, uint32_t* p_pixels, ui
 	
 	sog::vec4 v4{};
 
-	for ( p.y = min_y; p.y <= max_y; p.y++ )
+	for ( p.y() = min_y; p.y() <= max_y; p.y()++ )
 	{
 		int32_t bary0_col = bary0_row;
 		int32_t bary1_col = bary1_row;
 		int32_t bary2_col = bary2_row;
 
-		for ( p.x = min_x; p.x <= max_x; p.x++ )
+		for ( p.x() = min_x; p.x() <= max_x; p.x()++ )
 		{
 			if ( ( bary0_col | bary1_col | bary2_col ) >= 0 )
 			{
-				uint32_t buffer_offset = p.y * p_buffer_width + p.x;
+				uint32_t buffer_offset = p.y() * p_buffer_width + p.x();
 				int32_t total = bary0_col + bary1_col + bary2_col;
 				
 				if( p_shader( v4, bary0_col, bary1_col, bary2_col ) )
-					p_pixels[ buffer_offset ] = v4.bgra8;
+					p_pixels[ buffer_offset ] = v4.bgra8();
 			}
 
 			bary0_col += A12;

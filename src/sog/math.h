@@ -10,9 +10,9 @@
 #include <sog/math/vector4.h>
 
 #define GEN_STD_DEF(_f)  inline float _f( const float& _x ) { return std::_f( _x ); }
-#define VEC2_STD_DEF(_f) inline vec2 _f( const vec2& _v ) { return { std::_f( _v.x ), std::_f( _v.y ) }; }
-#define VEC3_STD_DEF(_f) inline vec3 _f( const vec3& _v ) { return { std::_f( _v.x ), std::_f( _v.y ), std::_f( _v.z ) }; }
-#define VEC4_STD_DEF(_f) inline vec4 _f( const vec4& _v ) { return { std::_f( _v.x ), std::_f( _v.y ), std::_f( _v.z ), std::_f( _v.w ) }; }
+#define VEC2_STD_DEF(_f) inline vec2 _f( const vec2& _v ) { return { std::_f( _v.x() ), std::_f( _v.y() ) }; }
+#define VEC3_STD_DEF(_f) inline vec3 _f( const vec3& _v ) { return { std::_f( _v.x() ), std::_f( _v.y() ), std::_f( _v.z() ) }; }
+#define VEC4_STD_DEF(_f) inline vec4 _f( const vec4& _v ) { return { std::_f( _v.x() ), std::_f( _v.y() ), std::_f( _v.z() ), std::_f( _v.w() ) }; }
 
 #define SOG_STD_DEF(_f) \
 GEN_STD_DEF( _f ); \
@@ -44,7 +44,7 @@ inline Ty clamp( const Ty& _v, const Ty& _min, const Ty& _max )
 }
 
 inline float length( const vec2& _vec2 ) {
-	return std::sqrt( _vec2.x * _vec2.x + _vec2.y * _vec2.y );
+	return std::sqrt( _vec2.x() * _vec2.x() + _vec2.y() * _vec2.y() );
 }
 
 inline vec2 mod( const vec2& _x, float _y ) {
@@ -52,7 +52,7 @@ inline vec2 mod( const vec2& _x, float _y ) {
 }
 
 inline float dot( const vec3& _a, const vec3& _b ) {
-	return _a.x * _b.x + _a.y * _b.y + _a.z * _b.z;
+	return _a.x() * _b.x() + _a.y() * _b.y() + _a.z() * _b.z();
 }
 
 template<typename Ty>

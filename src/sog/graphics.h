@@ -13,10 +13,10 @@ union color
 
 	color( const sog::vec4& _vec )
 	{
-		rgba.r = sog::clamp<float>( _vec.x, 0.0f, 1.0f ) * 255;
-		rgba.g = sog::clamp<float>( _vec.y, 0.0f, 1.0f ) * 255;
-		rgba.b = sog::clamp<float>( _vec.z, 0.0f, 1.0f ) * 255;
-		rgba.a = sog::clamp<float>( _vec.w, 0.0f, 1.0f ) * 255;
+		rgba.r = sog::clamp<float>( _vec.x(), 0.0f, 1.0f ) * 255;
+		rgba.g = sog::clamp<float>( _vec.y(), 0.0f, 1.0f ) * 255;
+		rgba.b = sog::clamp<float>( _vec.z(), 0.0f, 1.0f ) * 255;
+		rgba.a = sog::clamp<float>( _vec.w(), 0.0f, 1.0f ) * 255;
 	}
 
 	color( uint32_t p_ui32 ) {

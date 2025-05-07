@@ -20,8 +20,8 @@ static void swizzleCompletenessTestVec2()
 	sog::vec4 v4s{};
 
 	// 1 comp
-	v1s = v2.x;
-	v1s = v2.y;
+	v1s = v2.x();
+	v1s = v2.y();
 	// 2 comp
 	v2s = v2.xx;
 	v2s = v2.xy;
@@ -64,9 +64,9 @@ static void swizzleCompletenessTestVec3()
 	sog::vec4 v4s{};
 
 	// 1 comp
-	v1s = v3.x;
-	v1s = v3.y;
-	v1s = v3.z;
+	v1s = v3.x();
+	v1s = v3.y();
+	v1s = v3.z();
 	// 2 comp
 	v2s = v3.xx;
 	v2s = v3.xy;
@@ -199,10 +199,10 @@ static void swizzleCompletenessTestVec4()
 	sog::vec4 v4s{};
 
 	// 1 comp
-	v1s = v4.x;
-	v1s = v4.y;
-	v1s = v4.z;
-	v1s = v4.w;
+	v1s = v4.x();
+	v1s = v4.y();
+	v1s = v4.z();
+	v1s = v4.w();
 	// 2 comp
 	v2s = v4.xx;
 	v2s = v4.xy;

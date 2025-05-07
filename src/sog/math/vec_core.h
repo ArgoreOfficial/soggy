@@ -11,4 +11,12 @@ inline auto operator##_op##( const _lhsTy& _lhs, const _rhsTy& _rhs ) { \
 
 #define VEC_DEFAULT_OPERATORS(_m) _m( / ); _m( * ); _m( + ); _m( - );
 
+namespace sog {
+
+struct vec2;
+struct vec3;
+struct vec4;
+
+}
+
 #endif
